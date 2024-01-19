@@ -1,0 +1,22 @@
+export enum CONVERSATION_BACKGROUND_STATUS {
+  DELETED = 0,
+  ACTIVE = 1,
+}
+
+export enum CONVERSATION_MEMBER_PERMISSION {
+  MEMBER = 0,
+  DEPUTY = 1,
+  OWNER = 2,
+}
+
+export enum CONVERSATION_TYPE {
+  SYSTEM = 0,
+  GROUP = 1,
+  PERSONAL = 2,
+}
+
+export enum CONVERSATION_STATUS {
+  ACTIVE = 1,
+  NOT_ACTIVE = 0,
+  BLOCK = 2,
+}
