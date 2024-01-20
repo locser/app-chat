@@ -43,24 +43,6 @@ export class User extends BaseModel {
   })
   address: string;
 
-  // @Prop({
-  //   type: 'number',
-  //   nullable: true,
-  // })
-  // lat: number;
-
-  // @Prop({
-  //   type: 'number',
-  //   nullable: true,
-  // })
-  // lng: number;
-
-  // @Prop({
-  //   type: 'int',
-  //   default: 0,
-  // })
-  // no_of_follow: number;
-
   @Prop({
     type: 'string',
     nullable: true,
@@ -95,24 +77,6 @@ export class User extends BaseModel {
     nullable: true,
   })
   email: string;
-
-  // @Prop({
-  //   type: 'number',
-  //   default: BOOLEAN.FALSE,
-  // })
-  // is_enable_birthday: BOOLEAN;
-
-  // @Prop({
-  //   type: 'number',
-  //   default: BOOLEAN.FALSE,
-  // })
-  // is_enable_phone: BOOLEAN;
-
-  // @Prop({
-  //   type: 'number',
-  //   default: BOOLEAN.FALSE,
-  // })
-  // is_enable_email: BOOLEAN;
 
   @Prop({
     type: Timestamp,

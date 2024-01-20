@@ -1,18 +1,10 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Post,
-  Request,
-  UseGuards,
-} from '@nestjs/common';
-import { Role } from 'src/enum';
-import { AuthGuard } from './auth.guard';
+import { Body, Controller, Get, Param, Post, Request } from '@nestjs/common';
 import { AuthService } from './auth.service';
+import { ChangePasswordDto } from './dto/change-password.dto';
 import { RequestWithUser } from './dto/requests.type';
 import { LoginDto } from './dto/user-sign-in.dto';
 import { SignUpDto } from './dto/user-sign-up.dto';
-import { Public, Roles } from './roles.decorator';
+import { Public } from './roles.decorator';
 
 @Controller('auth')
 export class AuthController {
@@ -34,6 +26,18 @@ export class AuthController {
   @Post('sign-up')
   async signUp(@Body() signUpDto: SignUpDto) {
     const data = await this.authService.signUp(signUpDto);
+    return data;
+  }
+
+  @Post('change-password')
+  async changePassword(
+    @Request() req: RequestWithUser,
+    @Param() changePasswordDto: ChangePasswordDto,
+  ) {
+    const data = await this.authService.changePassword(
+      req.user._id,
+      changePasswordDto,
+    );
     return data;
   }
 }

@@ -1,13 +1,14 @@
-import { Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectModel } from '@nestjs/mongoose';
 import * as bcrypt from 'bcrypt';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { USER_STATUS } from 'src/enum';
 import { ExceptionResponse, User } from 'src/shared';
 import { BaseResponse } from 'src/shared/base-response.response';
 import { LoginDto } from './dto/user-sign-in.dto';
 import { SignUpDto } from './dto/user-sign-up.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 
 @Injectable()
 export class AuthService {
@@ -18,7 +19,13 @@ export class AuthService {
   ) {}
 
   async signIn(body: LoginDto) {
-    const hasUser = await this.getAuthenticatedUser(body.phone, body.password);
+    const hasUser = await this.getAuthenticatedUser(
+      {
+        phone: body.phone,
+        status: USER_STATUS.ACTIVE,
+      },
+      body.password,
+    );
 
     const payload = {
       _id: hasUser._id,
@@ -35,7 +42,7 @@ export class AuthService {
     });
   }
 
-  async getAuthenticatedUser(phone: string, password: string): Promise<User> {
+  async getAuthenticatedUser1(phone: string, password: string): Promise<User> {
     try {
       // get user
       const user = await this.userModel.findOne({
@@ -89,6 +96,54 @@ export class AuthService {
     } catch (error) {
       console.log('AuthService ~ signUp ~ error:', error);
       throw new ExceptionResponse(400, 'ERROR', error);
+    }
+  }
+
+  async changePassword(
+    _id: Types.ObjectId,
+    changePasswordDto: ChangePasswordDto,
+  ) {
+    const { old_password, new_password } = changePasswordDto;
+
+    if (old_password == new_password) {
+      throw new ExceptionResponse(
+        HttpStatus.BAD_REQUEST,
+        'Mật khẩu mới không được trùng mật khẩu cũ',
+      );
+    }
+
+    const hasAccess = await this.getAuthenticatedUser(
+      { _id: _id },
+      old_password,
+    );
+
+    if (hasAccess) {
+      const userUpdated = await this.userModel.findOneAndUpdate(
+        {
+          _id: _id,
+        },
+        {
+          password: await bcrypt.hash(changePasswordDto.new_password, 5),
+        },
+      );
+
+      return userUpdated;
+    }
+  }
+
+  async getAuthenticatedUser(filter: object, password: string): Promise<User> {
+    try {
+      // get user
+      const user = await this.userModel.findOne(filter);
+
+      if (!user) {
+        throw new ExceptionResponse(404, 'Wrong credentials!!');
+      }
+      // check password
+      await this.verifyPlainContentWithHashedContent(password, user.password);
+      return user;
+    } catch (error) {
+      throw new ExceptionResponse(404, 'Wrong credentials!!');
     }
   }
 }
