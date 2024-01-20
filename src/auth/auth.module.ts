@@ -1,25 +1,28 @@
 import { Module } from '@nestjs/common';
-import { UserService } from './user.service';
-import { UserController } from './user.controller';
+import { AuthService } from './auth.service';
+import { AuthController } from './auth.controller';
 import { MongooseModule } from '@nestjs/mongoose';
 import {
+  User,
+  UserSchema,
   CategorySticker,
   CategoryStickerSchema,
-  Conversation,
   ConversationMember,
   ConversationMemberSchema,
   ConversationMemberWaitingConfirm,
   ConversationMemberWaitingConfirmSchema,
+  Conversation,
   ConversationSchema,
-  Message,
-  MessageSchema,
   Sticker,
   StickerSchema,
-  User,
-  UserSchema,
+  Message,
+  MessageSchema,
 } from 'src/shared';
+import { JwtModule } from '@nestjs/jwt';
 
 @Module({
+  controllers: [AuthController],
+  providers: [AuthService],
   imports: [
     MongooseModule.forFeature([
       {
@@ -52,8 +55,11 @@ import {
         schema: MessageSchema,
       },
     ]),
+    JwtModule.register({
+      global: true,
+      secret: process.env.JWT_SECRET,
+      signOptions: { expiresIn: '7d' },
+    }),
   ],
-  controllers: [UserController],
-  providers: [UserService],
 })
-export class UserModule {}
+export class AuthModule {}

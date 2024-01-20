@@ -1,53 +1,35 @@
-import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import {
-  UserEntity,
-  CategoryStickerEntity,
-  ConversationEntity,
-  ConversationMemberEntity,
-  ConversationMemberWaitingConfirmEntity,
-  MessageEntity,
-  StickerEntity,
-} from 'src/shared';
-import { DataSource, Repository } from 'typeorm';
+import { HttpStatus, Injectable } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model, Types } from 'mongoose';
+import { RequestWithUser } from 'src/auth/dto/requests.type';
+import { ExceptionResponse, User } from 'src/shared';
+import { UserProfileResponse } from './response/user-profile.response';
 
 @Injectable()
 export class UserService {
   constructor(
-    private dataSource: DataSource,
-    @InjectRepository(UserEntity)
-    private userRepository: Repository<UserEntity>,
-    @InjectRepository(CategoryStickerEntity)
-    private userRepository1: Repository<CategoryStickerEntity>,
-    @InjectRepository(ConversationEntity)
-    private userRepository2: Repository<ConversationEntity>,
-    @InjectRepository(ConversationMemberEntity)
-    private userRepository3: Repository<ConversationMemberEntity>,
-    @InjectRepository(ConversationMemberWaitingConfirmEntity)
-    private userRepository4: Repository<ConversationMemberWaitingConfirmEntity>,
-    @InjectRepository(MessageEntity)
-    private userRepository5: Repository<MessageEntity>,
-    @InjectRepository(StickerEntity)
-    private userRepository6: Repository<StickerEntity>,
+    @InjectModel(User.name)
+    private readonly userModel: Model<User>,
   ) {}
-  async gettt() {
-    const newUser = await this.userRepository
-      .create({
-        full_name: 'loc',
-        nick_name: 'locser',
-      })
-      .save();
-    await this.userRepository1
-      .create({
-        owner_id: '1',
-      })
-      .save();
-    await this.userRepository2.create({}).save();
 
-    await this.userRepository3.create({}).save();
-    await this.userRepository4.create({}).save();
-    await this.userRepository5.create({}).save();
-    await this.userRepository6.create({}).save();
-    return newUser;
+  async updateUser(req: RequestWithUser, body: Partial<User>) {
+    const { password, phone, status, role, ...updateData } = body;
+    const userUpdated = await this.userModel.findOneAndUpdate(
+      req.user._id,
+      {
+        ...updateData,
+      },
+      { new: true },
+    );
+
+    if (!userUpdated) {
+      throw new ExceptionResponse(HttpStatus.BAD_REQUEST, 'Update that bai');
+    }
+    return { userUpdated };
+  }
+  async getProfile(user_id: Types.ObjectId, target_id: Types.ObjectId) {
+    const user = await this.userModel.findById(target_id);
+
+    return new UserProfileResponse(user);
   }
 }

@@ -6,3 +6,8 @@ export enum USER_STATUS {
   REQUEST_REMOVE = 4, // User yêu cầu xoá tài khoản
   USER_BLOCK = 5, // User khoá tài khoản
 }
+
+export enum Role {
+  User = 'user',
+  Admin = 'admin',
+}

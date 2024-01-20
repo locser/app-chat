@@ -1,92 +1,104 @@
-import { Column, Entity } from 'typeorm';
 import { BaseModel } from './base-model.entity';
 import {
   CONVERSATION_STATUS,
   CONVERSATION_TYPE,
 } from 'src/enum/conversation.enum';
 import { BOOLEAN } from 'src/enum/common.enum';
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 
-@Entity('conversation')
-export class ConversationEntity extends BaseModel {
-  @Column({
-    type: 'varchar',
+@Schema({
+  timestamps: {
+    createdAt: 'created_at',
+    updatedAt: 'updated_at',
+  },
+  toJSON: {
+    // getters: true,
+    // virtuals: true,
+  },
+})
+// @Entity('conversation')
+export class Conversation extends BaseModel {
+  @Prop({
+    type: 'string',
     nullable: true,
   })
   name: string;
 
-  // @Column({
+  // @Prop({
   //   type: 'json',
   //   nullable: true,
   // })
   // avatar: any;
 
-  @Column({
-    type: 'text',
+  @Prop({
+    type: 'string',
     nullable: true,
   })
   avatar: string;
 
-  @Column({
-    type: 'smallint',
+  @Prop({
+    type: 'number',
   })
   type: CONVERSATION_TYPE;
 
-  @Column({
-    type: 'bigint',
+  @Prop({
+    type: 'string',
     array: true,
   })
   members: string[];
 
-  @Column({
-    type: 'text',
+  @Prop({
+    type: 'string',
     nullable: true,
   })
   background: string;
 
-  @Column({
-    type: 'smallint',
+  @Prop({
+    type: 'number',
   })
   no_of_member: number;
 
-  @Column({
-    type: 'varchar',
+  @Prop({
+    type: 'string',
     nullable: true,
   })
   link_join: string;
 
-  @Column({
-    type: 'smallint',
+  @Prop({
+    type: 'number',
     default: BOOLEAN.FALSE,
   })
   is_confirm_new_member: BOOLEAN;
 
-  @Column({
-    type: 'smallint',
+  @Prop({
+    type: 'number',
     default: BOOLEAN.TRUE,
   })
   is_join_with_link: BOOLEAN;
 
-  @Column({
-    type: 'smallint',
+  @Prop({
+    type: 'number',
     default: BOOLEAN.TRUE,
   })
   is_send_message: BOOLEAN;
 
-  @Column({
-    type: 'bigint',
+  @Prop({
+    type: 'string',
     nullable: true,
   })
   last_message_id: string;
 
-  @Column({
-    type: 'double precision',
+  @Prop({
+    type: 'number',
     nullable: true,
   })
   last_activity: number;
 
-  @Column({
-    type: 'smallint',
+  @Prop({
+    type: 'number',
     default: CONVERSATION_STATUS.ACTIVE,
   })
   status: CONVERSATION_STATUS;
 }
+
+export const ConversationSchema = SchemaFactory.createForClass(Conversation);
