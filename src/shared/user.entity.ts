@@ -1,7 +1,7 @@
 import { BaseModel } from './base-model.entity';
-import { USER_STATUS } from '../enum/user.enum';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Timestamp } from 'mongodb';
+import { Role, USER_STATUS } from 'src/enum';
 
 @Schema({
   timestamps: {
@@ -30,6 +30,12 @@ export class User extends BaseModel {
     nullable: true,
   })
   nick_name: string;
+
+  @Prop({
+    type: 'string',
+    nullable: false,
+  })
+  password: string;
 
   @Prop({
     type: 'string',
@@ -119,6 +125,13 @@ export class User extends BaseModel {
     default: USER_STATUS.ACTIVE,
   })
   status: USER_STATUS;
+
+  @Prop({
+    type: 'string',
+    default: Role.User,
+    enum: ['user', 'admin'],
+  })
+  role: Role;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

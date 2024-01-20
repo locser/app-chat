@@ -2,8 +2,11 @@ import { Injectable } from '@nestjs/common';
 
 @Injectable()
 export class UserService {
-  constructor() {}
-  async gettt() {
-    return 'helllllllo';
+  updateUser() {
+    throw new Error('Method not implemented.');
   }
+  getProfile() {
+    throw new Error('Method not implemented.');
+  }
+  constructor() {}
 }

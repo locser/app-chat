@@ -1,13 +1,21 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Post } from '@nestjs/common';
 import { UserService } from './user.service';
 
 @Controller('user')
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
-  @Get('')
-  async register() {
-    const data = await this.userService.gettt();
+  @Get('profile')
+  async getProfile() {
+    const data = await this.userService.getProfile();
+    return {
+      data: data,
+    };
+  }
+
+  @Post('update')
+  async updateUser() {
+    const data = await this.userService.updateUser();
     return {
       data: data,
     };
