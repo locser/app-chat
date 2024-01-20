@@ -1,38 +1,20 @@
 import { Module } from '@nestjs/common';
 import { ConfigMongoService } from './config-mongo.service';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule as ConfigNest } from '@nestjs/config';
-import {
-  CategoryStickerEntity,
-  ConversationEntity,
-  ConversationMemberEntity,
-  ConversationMemberWaitingConfirmEntity,
-  MessageEntity,
-  StickerEntity,
-  UserEntity,
-} from 'src/shared';
+
+import { MongooseModule } from '@nestjs/mongoose';
 
 @Module({
   imports: [
-    ConfigNest.forRoot(),
+    ConfigNest.forRoot({}),
 
-    TypeOrmModule.forRoot({
-      type: 'mongodb',
-      host: 'localhost',
-      port: 27017,
-      database: 'app-chat',
-      entities: [
-        CategoryStickerEntity,
-        ConversationEntity,
-        ConversationMemberEntity,
-        ConversationMemberWaitingConfirmEntity,
-        MessageEntity,
-        StickerEntity,
-        UserEntity,
-      ],
-      retryWrites: true,
-      w: 'majority',
+    MongooseModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: async (configService: ConfigMongoService) =>
+        await configService.createMongooseOptions(),
+      inject: [ConfigMongoService],
     }),
+
     // TypeOrmModule.forRoot({
     //   type: 'postgres',
     //   host: 'localhost',
@@ -41,18 +23,19 @@ import {
     //   port: 5432,
     //   database: 'app-chat',
     //   entities: [
-    //     CategoryStickerEntity,
-    //     ConversationEntity,
-    //     ConversationMemberEntity,
-    //     ConversationMemberWaitingConfirmEntity,
-    //     MessageEntity,
-    //     StickerEntity,
-    //     UserEntity,
+    //     CategorySticker,
+    //     Conversation,
+    //     ConversationMember,
+    //     ConversationMemberWaitingConfirm,
+    //     Message,
+    //     Sticker,
+    //     User,
     //   ],
     //   autoLoadEntities: true,
     //   synchronize: true,
     // }),
   ],
   providers: [ConfigMongoService],
+  exports: [ConfigMongoService],
 })
 export class ConfigModule {}

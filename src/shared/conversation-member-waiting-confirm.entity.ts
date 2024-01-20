@@ -1,15 +1,28 @@
-import { Column, Entity } from 'typeorm';
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { BaseModel } from './base-model.entity';
 
-@Entity('conversation_member_waiting_confirm')
-export class ConversationMemberWaitingConfirmEntity extends BaseModel {
-  @Column({
-    type: 'bigint',
+@Schema({
+  timestamps: {
+    createdAt: 'created_at',
+    updatedAt: 'updated_at',
+  },
+  toJSON: {
+    // getters: true,
+    // virtuals: true,
+  },
+})
+// @Entity('conversation_member_waiting_confirm')
+export class ConversationMemberWaitingConfirm extends BaseModel {
+  @Prop({
+    type: 'string',
   })
   conversation_id: string;
 
-  @Column({
-    type: 'bigint',
+  @Prop({
+    type: 'string',
   })
   user_id: string;
 }
+
+export const ConversationMemberWaitingConfirmSchema =
+  SchemaFactory.createForClass(ConversationMemberWaitingConfirm);

@@ -1,27 +1,56 @@
 import { Module } from '@nestjs/common';
 import { UserService } from './user.service';
 import { UserController } from './user.controller';
-import { TypeOrmModule } from '@nestjs/typeorm';
+import { MongooseModule } from '@nestjs/mongoose';
 import {
-  CategoryStickerEntity,
-  ConversationEntity,
-  ConversationMemberEntity,
-  ConversationMemberWaitingConfirmEntity,
-  MessageEntity,
-  StickerEntity,
-  UserEntity,
+  CategorySticker,
+  CategoryStickerSchema,
+  Conversation,
+  ConversationMember,
+  ConversationMemberSchema,
+  ConversationMemberWaitingConfirm,
+  ConversationMemberWaitingConfirmSchema,
+  ConversationSchema,
+  Message,
+  MessageSchema,
+  Sticker,
+  StickerSchema,
+  User,
+  UserSchema,
 } from 'src/shared';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([
-      CategoryStickerEntity,
-      ConversationEntity,
-      ConversationMemberEntity,
-      ConversationMemberWaitingConfirmEntity,
-      MessageEntity,
-      StickerEntity,
-      UserEntity,
+    MongooseModule.forFeature([
+      {
+        name: User.name,
+        schema: UserSchema,
+      },
+      {
+        name: CategorySticker.name,
+        schema: CategoryStickerSchema,
+      },
+      {
+        name: ConversationMember.name,
+        schema: ConversationMemberSchema,
+      },
+      {
+        name: ConversationMemberWaitingConfirm.name,
+        schema: ConversationMemberWaitingConfirmSchema,
+      },
+      {
+        name: Conversation.name,
+        schema: ConversationSchema,
+      },
+
+      {
+        name: Sticker.name,
+        schema: StickerSchema,
+      },
+      {
+        name: Message.name,
+        schema: MessageSchema,
+      },
     ]),
   ],
   controllers: [UserController],
