@@ -5,6 +5,7 @@ import {
 } from 'src/enum/conversation.enum';
 import { BOOLEAN } from 'src/enum/common.enum';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Types } from 'mongoose';
 
 @Schema({
   timestamps: {
@@ -42,10 +43,9 @@ export class Conversation extends BaseModel {
   type: CONVERSATION_TYPE;
 
   @Prop({
-    type: 'string',
     array: true,
   })
-  members: string[];
+  members: Types.ObjectId[];
 
   @Prop({
     type: 'string',

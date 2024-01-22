@@ -1,6 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { BaseModel } from './base-model.entity';
 import { CONVERSATION_MEMBER_PERMISSION } from 'src/enum/conversation.enum';
+import { Types } from 'mongoose';
 
 @Schema({
   timestamps: {
@@ -20,9 +21,10 @@ export class ConversationMember extends BaseModel {
   conversation_id: string;
 
   @Prop({
-    type: String,
+    type: Types.ObjectId,
+    ref: 'User',
   })
-  user_id: string;
+  user_id: Types.ObjectId;
 
   @Prop({
     type: Number,

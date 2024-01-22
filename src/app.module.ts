@@ -6,9 +6,12 @@ import { UserModule } from './user/user.module';
 import { AuthModule } from './auth/auth.module';
 import { APP_GUARD } from '@nestjs/core';
 import { AuthGuard } from './auth/auth.guard';
+import { ConversationModule } from './conversation/conversation.module';
+import { MessageModule } from './message/message.module';
+import { FriendModule } from './friend/friend.module';
 
 @Module({
-  imports: [ConfigModule, UserModule, AuthModule],
+  imports: [ConfigModule, UserModule, AuthModule, ConversationModule, MessageModule, FriendModule],
   controllers: [AppController],
 
   providers: [
