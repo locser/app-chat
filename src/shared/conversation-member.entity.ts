@@ -2,6 +2,9 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { BaseModel } from './base-model.entity';
 import { CONVERSATION_MEMBER_PERMISSION } from 'src/enum/conversation.enum';
 import { Types } from 'mongoose';
+import { User } from './user.entity';
+import * as mongoose from 'mongoose';
+import { UserResponse } from 'src/conversation/response/user.response';
 
 @Schema({
   timestamps: {
@@ -24,7 +27,7 @@ export class ConversationMember extends BaseModel {
     type: Types.ObjectId,
     ref: 'User',
   })
-  user_id: Types.ObjectId;
+  user_id:UserResponse;
 
   @Prop({
     type: Number,
@@ -42,6 +45,8 @@ export class ConversationMember extends BaseModel {
     default: 0,
   })
   message_last_id: string;
+
+
 }
 
 export const ConversationMemberSchema =
