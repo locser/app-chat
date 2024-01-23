@@ -52,11 +52,14 @@ export class AuthGuard implements CanActivate {
       context.getClass(),
     ]);
 
-    if (!requiredRoles || !requiredRoles.includes(payload?.role)) {
-      throw new ExceptionResponse(
-        HttpStatus.FORBIDDEN,
-        'Hãy đưa tôi 1 triệu tôi đưa bạn admin!',
-      );
+    if (!requiredRoles) {
+    } else {
+      if (!requiredRoles.includes(payload?.role)) {
+        throw new ExceptionResponse(
+          HttpStatus.FORBIDDEN,
+          'Hãy đưa tôi 1 triệu tôi đưa bạn admin!',
+        );
+      }
     }
 
     request['user'] = payload;

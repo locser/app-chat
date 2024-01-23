@@ -4,6 +4,7 @@ import { Timestamp } from 'mongodb';
 import { Role, USER_STATUS } from 'src/enum';
 
 @Schema({
+  collection: 'users',
   timestamps: {
     createdAt: 'created_at',
     updatedAt: 'updated_at',
@@ -17,40 +18,47 @@ export class User extends BaseModel {
   @Prop({
     type: 'string',
     nullable: true,
+    default: '',
   })
   avatar: string;
 
   @Prop({
     type: 'string',
+    default: '',
   })
   full_name: string;
 
   @Prop({
     type: 'string',
     nullable: true,
+    default: '',
   })
   nick_name: string;
 
   @Prop({
     type: 'string',
     nullable: false,
+    default: '',
   })
   password: string;
 
   @Prop({
     type: 'string',
     nullable: true,
+    default: '',
   })
   address: string;
 
   @Prop({
     type: 'string',
     nullable: true,
+    default: '',
   })
   cover: string;
 
   @Prop({
     type: 'string',
+    default: '',
   })
   phone: string;
 
@@ -63,26 +71,30 @@ export class User extends BaseModel {
   @Prop({
     type: 'string',
     nullable: true,
+    default: '',
   })
   birthday: string;
 
   @Prop({
     type: 'string',
     nullable: true,
+    default: '',
   })
   description: string;
 
   @Prop({
     type: 'string',
     nullable: true,
+    default: '',
   })
   email: string;
 
   @Prop({
     type: Timestamp,
     nullable: true,
+    default: '',
   })
-  last_connect: Date;
+  last_connect: number;
 
   @Prop({
     type: 'number',

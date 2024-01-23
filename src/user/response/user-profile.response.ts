@@ -49,9 +49,9 @@ export class UserProfileResponse {
   })
   email: string;
   @ApiProperty({
-    type: String,
+    type: Number,
   })
-  last_connect: string;
+  last_connect: number;
   @ApiProperty({
     type: Number,
   })
@@ -70,10 +70,10 @@ export class UserProfileResponse {
     this.cover = user.cover || '';
     this.phone = user.phone || '';
     this.gender = user.gender || 0;
-    this.birthday = user.birthday || null;
-    this.description = user.description || null;
-    this.email = user.email || null;
-    this.last_connect = moment(user.last_connect, 'x').format() || '';
+    this.birthday = user.birthday || '';
+    this.description = user.description || '';
+    this.email = user.email || '';
+    this.last_connect = user.last_connect || +moment();
     this.status = user.status || USER_STATUS.ACTIVE;
     this.role = user.role || Role.User;
   }

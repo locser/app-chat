@@ -6,6 +6,8 @@ import {
 import { BOOLEAN } from 'src/enum/common.enum';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Types } from 'mongoose';
+import { Timestamp } from 'mongodb';
+import * as moment from 'moment';
 
 @Schema({
   timestamps: {
@@ -22,18 +24,14 @@ export class Conversation extends BaseModel {
   @Prop({
     type: 'string',
     nullable: true,
+    default: '',
   })
   name: string;
-
-  // @Prop({
-  //   type: 'json',
-  //   nullable: true,
-  // })
-  // avatar: any;
 
   @Prop({
     type: 'string',
     nullable: true,
+    default: '',
   })
   avatar: string;
 
@@ -44,23 +42,27 @@ export class Conversation extends BaseModel {
 
   @Prop({
     array: true,
+    default: [],
   })
   members: Types.ObjectId[];
 
   @Prop({
     type: 'string',
     nullable: true,
+    default: '',
   })
   background: string;
 
   @Prop({
     type: 'number',
+    default: 2,
   })
   no_of_member: number;
 
   @Prop({
     type: 'string',
     nullable: true,
+    default: '',
   })
   link_join: string;
 
@@ -83,14 +85,17 @@ export class Conversation extends BaseModel {
   is_send_message: BOOLEAN;
 
   @Prop({
-    type: 'string',
+    type: Types.ObjectId,
+    ref: 'Message',
     nullable: true,
+    default: '',
   })
   last_message_id: string;
 
   @Prop({
-    type: 'number',
+    type: Timestamp,
     nullable: true,
+    default: +moment(),
   })
   last_activity: number;
 
@@ -102,3 +107,5 @@ export class Conversation extends BaseModel {
 }
 
 export const ConversationSchema = SchemaFactory.createForClass(Conversation);
+
+// ConversationSchema.pre('save', {})
