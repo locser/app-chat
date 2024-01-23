@@ -14,14 +14,10 @@ import { BaseResponse } from 'src/shared/base-response.response';
 import { FriendWithParamDto } from './dto/friend-with-param.dto';
 import { FriendWithQueryDto } from './dto/friend-with-query.dto';
 import { RequestFriendWithParamDto } from './dto/request-friend-with-param.dto';
-import { RequestFriendWithQueryDto } from './dto/request-friend-with-query.dto';
 import { ContactResponseSwagger, SyncFriendDto } from './dto/sync-friend.dto';
 import { FriendService } from './friend.service';
 import { CountFriendRequestsResponseSwagger } from './response/count-friend-requests.response';
-import {
-  FriendResponse,
-  FriendResponseSwagger,
-} from './response/friend.response';
+import { FriendResponse } from './response/friend.response';
 
 @Controller('friend')
 export class FriendController {
@@ -79,38 +75,38 @@ export class FriendController {
     return data;
   }
 
-  @Get('waiting-confirm')
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'Danh sách lời mời kết bạn',
-    type: FriendResponseSwagger,
-  })
-  @ApiOperation({ summary: 'Lấy danh sách lời mời kết bạn' })
-  async getFriendRequest(
-    @Request() req: RequestWithUser,
-    @Query() query: RequestFriendWithQueryDto,
-  ) {
-    const data = await this.friendService.getRequestFriend(req.user._id, query);
-    return data;
-  }
+  // @Get('waiting-confirm')
+  // @ApiResponse({
+  //   status: HttpStatus.OK,
+  //   description: 'Danh sách lời mời kết bạn',
+  //   type: FriendResponseSwagger,
+  // })
+  // @ApiOperation({ summary: 'Lấy danh sách lời mời kết bạn' })
+  // async getFriendRequest(
+  //   @Request() req: RequestWithUser,
+  //   @Query() query: RequestFriendWithQueryDto,
+  // ) {
+  //   const data = await this.friendService.getRequestFriend(req.user._id, query);
+  //   return data;
+  // }
 
-  @Get('waiting-request')
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'Danh sách gửi lời mời kết bạn',
-    type: FriendResponseSwagger,
-  })
-  @ApiOperation({ summary: 'Lấy danh sách gửi lời mời kết bạn' })
-  async getFriendSendRequest(
-    @Request() req: RequestWithUser,
-    @Query() query: RequestFriendWithQueryDto,
-  ) {
-    const data = await this.friendService.getSendRequestFriend(
-      req.user._id,
-      query,
-    );
-    return data;
-  }
+  // @Get('waiting-request')
+  // @ApiResponse({
+  //   status: HttpStatus.OK,
+  //   description: 'Danh sách gửi lời mời kết bạn',
+  //   type: FriendResponseSwagger,
+  // })
+  // @ApiOperation({ summary: 'Lấy danh sách gửi lời mời kết bạn' })
+  // async getFriendSendRequest(
+  //   @Request() req: RequestWithUser,
+  //   @Query() query: RequestFriendWithQueryDto,
+  // ) {
+  //   const data = await this.friendService.getSendRequestFriend(
+  //     req.user._id,
+  //     query,
+  //   );
+  //   return data;
+  // }
 
   @Post(':id')
   @ApiResponse({

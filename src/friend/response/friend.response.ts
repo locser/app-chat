@@ -61,8 +61,6 @@ export class FriendResponse extends BaseUserResponse {
   constructor(data?: any) {
     super(data);
     this.contact_type = data?.contact_type || 0;
-    // this.position = data?.position || '';
-    // this.is_online = data?.is_online || 0;
     this.created_at = data?.created_at || '';
     this.name_phone = data?.name_phone || '';
     this.user_status = data?.status || 1;

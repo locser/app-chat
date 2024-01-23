@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNumberString } from 'class-validator';
+import { IsString } from 'class-validator';
+import { Types } from 'mongoose';
 
 export class RequestFriendWithParamDto {
   @ApiProperty({
@@ -7,13 +8,8 @@ export class RequestFriendWithParamDto {
     example: 99453,
     description: 'id của người nhận yêu cầu',
   })
-  @IsNumberString(
-    {
-      no_symbols: true,
-    },
-    {
-      message: '$property phải là số nguyên dương',
-    },
-  )
-  id: string;
+  @IsString({
+    message: '$property phải là số nguyên dương',
+  })
+  id: Types.ObjectId;
 }
