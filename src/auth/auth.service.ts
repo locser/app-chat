@@ -9,6 +9,7 @@ import { BaseResponse } from 'src/shared/base-response.response';
 import { LoginDto } from './dto/user-sign-in.dto';
 import { SignUpDto } from './dto/user-sign-up.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { UserProfileResponse } from 'src/user/response/user-profile.response';
 
 @Injectable()
 export class AuthService {
@@ -85,12 +86,14 @@ export class AuthService {
 
       const hashedPassword = await bcrypt.hash(signUpDto.password, 5);
 
-      const newUser = await this.userModel.create({
-        full_name: signUpDto.full_name,
-        nick_name: signUpDto.nick_name,
-        phone: signUpDto.phone,
-        password: hashedPassword,
-      }); // TODO: Generate a JWT and return it here
+      const newUser = await this.userModel.create(
+        new UserProfileResponse({
+          full_name: signUpDto.full_name,
+          nick_name: signUpDto.nick_name,
+          phone: signUpDto.phone,
+          password: hashedPassword,
+        }),
+      ); // TODO: Generate a JWT and return it here
       // instead of the user object
       return new BaseResponse(200, 'OK', newUser);
     } catch (error) {
