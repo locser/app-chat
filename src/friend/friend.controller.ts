@@ -26,7 +26,7 @@ export class FriendController {
   /**
    * Bạn bè
    */
-  @Get('/my-friend')
+  @Get()
   @ApiResponse({
     status: 200,
     description: 'Danh sách bạn bè',

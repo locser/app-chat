@@ -152,6 +152,19 @@ export class FriendService {
     try {
       // kiểm tra xem targetUser có phải mình không?
 
+      await this.friendModel.create(
+        {
+          user_id: currentUserId,
+          user_friend_id: currentUserId,
+          type: 4,
+        },
+        {
+          user_id: currentUserId,
+          user_friend_id: currentUserId,
+          type: 4,
+        },
+      );
+
       const { page = 1, limit = 20, type } = query;
 
       // lấy ra ds bạn bè , này chỉ là câu query thui
