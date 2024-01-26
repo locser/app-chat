@@ -27,12 +27,12 @@ async function bootstrap() {
     ],
     deepScanRoutes: true,
   });
-  SwaggerModule.setup(process.env.CONFIG_PREFIX + 'v1/docs', app, document, {
-    customSiteTitle: 'Message API swagger',
+  SwaggerModule.setup('v1/docs', app, document, {
+    customSiteTitle: 'API swagger',
   });
 
   await app.listen(3000);
 
-  console.log('bootstrap ~ 3000:', 3000);
+  console.log(`Application is running on: ${await app.getUrl()}`);
 }
 bootstrap();
