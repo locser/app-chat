@@ -9,9 +9,10 @@ import { AuthGuard } from './auth/auth.guard';
 import { ConversationModule } from './conversation/conversation.module';
 import { MessageModule } from './message/message.module';
 import { FriendModule } from './friend/friend.module';
+import { ConnectionModule } from './connection/connection.module';
 
 @Module({
-  imports: [ConfigModule, UserModule, AuthModule, ConversationModule, MessageModule, FriendModule],
+  imports: [ConfigModule, UserModule, AuthModule, ConversationModule, MessageModule, FriendModule, ConnectionModule],
   controllers: [AppController],
 
   providers: [
