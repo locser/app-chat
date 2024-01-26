@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Param, Post, Request } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Query,
+  Request,
+} from '@nestjs/common';
 import { Types } from 'mongoose';
 import { RequestWithUser } from 'src/auth/dto/requests.type';
 import { User } from 'src/shared';
@@ -11,7 +19,7 @@ export class UserController {
   @Get('profile')
   async getProfile(
     @Request() req: RequestWithUser,
-    @Param('_id') _id: Types.ObjectId,
+    @Query('_id') _id: Types.ObjectId,
   ) {
     const data = await this.userService.getProfile(req.user._id, _id);
     return data;

@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import * as moment from 'moment';
+import { Types } from 'mongoose';
 import { Role, USER_STATUS } from 'src/enum';
 import { User } from 'src/shared';
 
@@ -61,20 +62,26 @@ export class UserProfileResponse {
   })
   role: string;
 
+  @ApiProperty({
+    type: Types.ObjectId,
+  })
+  _id: Types.ObjectId;
+
   constructor(user: Partial<User>) {
-    this.avatar = user.avatar || '';
-    this.full_name = user.full_name || '';
-    this.nick_name = user.nick_name || '';
-    this.password = user.password || '';
-    this.address = user.address || '';
-    this.cover = user.cover || '';
-    this.phone = user.phone || '';
-    this.gender = user.gender || 0;
-    this.birthday = user.birthday || '';
-    this.description = user.description || '';
-    this.email = user.email || '';
-    this.last_connect = user.last_connect || +moment();
-    this.status = user.status || USER_STATUS.ACTIVE;
-    this.role = user.role || Role.User;
+    this._id = user?._id || new Types.ObjectId();
+    this.avatar = user?.avatar || '';
+    this.full_name = user?.full_name || '';
+    this.nick_name = user?.nick_name || '';
+    this.password = user?.password || '';
+    this.address = user?.address || '';
+    this.cover = user?.cover || '';
+    this.phone = user?.phone || '';
+    this.gender = user?.gender || 0;
+    this.birthday = user?.birthday || '';
+    this.description = user?.description || '';
+    this.email = user?.email || '';
+    this.last_connect = user?.last_connect || +moment();
+    this.status = user?.status || USER_STATUS.ACTIVE;
+    this.role = user?.role || Role.User;
   }
 }

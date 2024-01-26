@@ -30,6 +30,10 @@ export class UserService {
   async getProfile(user_id: Types.ObjectId, target_id: Types.ObjectId) {
     const user = await this.userModel.findById(target_id);
 
+    if (!user) {
+      throw new ExceptionResponse(HttpStatus.NOT_FOUND, 'User không tồn tại');
+    }
+
     return new UserProfileResponse(user);
   }
 }
