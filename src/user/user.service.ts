@@ -14,26 +14,40 @@ export class UserService {
 
   async updateUser(req: RequestWithUser, body: Partial<User>) {
     const { password, phone, status, role, ...updateData } = body;
-    const userUpdated = await this.userModel.findOneAndUpdate(
-      req.user._id,
-      {
-        ...updateData,
-      },
-      { new: true },
-    );
+    const userUpdated = await this.userModel
+      .findOneAndUpdate(
+        req.user._id,
+        {
+          ...updateData,
+        },
+        { new: true },
+      )
+      .select({ password: 0 });
 
     if (!userUpdated) {
       throw new ExceptionResponse(HttpStatus.BAD_REQUEST, 'Update that bai');
     }
-    return { userUpdated };
+
+    return {
+      status: 200,
+      message: 'OK',
+      data: userUpdated,
+    };
   }
+
   async getProfile(user_id: Types.ObjectId, target_id: Types.ObjectId) {
-    const user = await this.userModel.findById(target_id);
+    const user = await this.userModel
+      .findById(target_id)
+      .select({ password: 0 });
 
     if (!user) {
       throw new ExceptionResponse(HttpStatus.NOT_FOUND, 'User không tồn tại');
     }
 
-    return new UserProfileResponse(user);
+    return {
+      status: 200,
+      message: 'OK',
+      data: new UserProfileResponse(user),
+    };
   }
 }
