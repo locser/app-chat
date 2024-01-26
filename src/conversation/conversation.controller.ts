@@ -4,6 +4,7 @@ import { RequestWithUser } from 'src/auth/dto/requests.type';
 import { ConversationService } from './conversation.service';
 import { CreateConversationDto } from './dto/create-conversation.dto';
 import { CreateConversationResponse } from './response/create-conversation-response';
+import { DetailConversation } from './dto/detail-conversation.dto';
 @ApiTags('Conversation')
 @Controller('conversation')
 export class ConversationController {
@@ -26,4 +27,17 @@ export class ConversationController {
     );
     return data;
   }
+  @Get('detail')
+  @ApiOperation({ summary: 'Danh sách cuộc trò chuyện' })
+  async detailConversation(
+    @Request() req: RequestWithUser,
+    @Body() detailConversation: DetailConversation,
+  ) {
+    const data = await this.conversationService.detailConversation(
+      req.user._id,
+      detailConversation,
+    );
+    return data;
+  }
+ 
 }
