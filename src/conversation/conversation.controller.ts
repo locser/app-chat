@@ -1,4 +1,12 @@
-import { Body, Controller, Get, HttpStatus, Request } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpStatus,
+  Post,
+  Query,
+  Request,
+} from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { RequestWithUser } from 'src/auth/dto/requests.type';
 import { ConversationService } from './conversation.service';
@@ -10,7 +18,7 @@ import { DetailConversation } from './dto/detail-conversation.dto';
 export class ConversationController {
   constructor(private readonly conversationService: ConversationService) {}
 
-  @Get('create')
+  @Post('create')
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Tạo cuộc trò chuyện cá nhân',
@@ -27,11 +35,12 @@ export class ConversationController {
     );
     return data;
   }
+
   @Get('detail')
   @ApiOperation({ summary: 'Danh sách cuộc trò chuyện' })
   async detailConversation(
     @Request() req: RequestWithUser,
-    @Body() detailConversation: DetailConversation,
+    @Query() detailConversation: DetailConversation,
   ) {
     const data = await this.conversationService.detailConversation(
       req.user._id,
@@ -39,5 +48,4 @@ export class ConversationController {
     );
     return data;
   }
- 
 }

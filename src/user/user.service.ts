@@ -14,15 +14,14 @@ export class UserService {
 
   async updateUser(req: RequestWithUser, body: Partial<User>) {
     const { password, phone, status, role, ...updateData } = body;
-    const userUpdated = await this.userModel
-      .findOneAndUpdate(
-        req.user._id,
-        {
-          ...updateData,
-        },
-        { new: true },
-      )
-      .select({ password: 0 });
+
+    console.log('data update', { ...updateData }, req.user._id);
+
+    const userUpdated = await this.userModel.findOneAndUpdate(
+      { _id: req.user._id },
+      { ...updateData },
+      { new: true },
+    );
 
     if (!userUpdated) {
       throw new ExceptionResponse(HttpStatus.BAD_REQUEST, 'Update that bai');

@@ -35,7 +35,9 @@ export class AuthService {
       avatar: hasUser.avatar,
     };
 
-    const access_token = await this.jwtService.signAsync(payload);
+    const access_token = await this.jwtService.signAsync(payload, {
+      secret: process.env.JWT_SECRET,
+    });
 
     return new BaseResponse(200, 'OK', {
       _id: hasUser._id,
@@ -69,7 +71,10 @@ export class AuthService {
   ) {
     const is_matching = await bcrypt.compare(plainText, hashedText);
     if (!is_matching) {
-      throw new ExceptionResponse(404, 'Wrong credentials!!');
+      throw new ExceptionResponse(
+        HttpStatus.UNAUTHORIZED,
+        'Mật khẩu không chính xác!! 1',
+      );
     }
   }
 
@@ -136,18 +141,28 @@ export class AuthService {
   }
 
   async getAuthenticatedUser(filter: object, password: string): Promise<User> {
+    console.log('AuthService ~ getAuthenticatedUser ~ password:', password);
     try {
       // get user
       const user = await this.userModel.findOne(filter);
+      console.log('AuthService ~ getAuthenticatedUser ~ user:', user);
 
       if (!user) {
-        throw new ExceptionResponse(404, 'Wrong credentials!!');
+        throw new ExceptionResponse(
+          404,
+          'Không tìm thấy user với số điện thoại này',
+        );
       }
       // check password
       await this.verifyPlainContentWithHashedContent(password, user.password);
+
       return user;
     } catch (error) {
-      throw new ExceptionResponse(404, 'Wrong credentials!!');
+      console.log('AuthService ~ getAuthenticatedUser ~ error:', error);
+      throw new ExceptionResponse(
+        HttpStatus.UNAUTHORIZED,
+        'Mật khẩu không chính xác!!',
+      );
     }
   }
 }

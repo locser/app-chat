@@ -11,5 +11,5 @@ export class RequestFriendWithParamDto {
   @IsString({
     message: '$property phải là số nguyên dương',
   })
-  id: Types.ObjectId;
+  _id: Types.ObjectId;
 }

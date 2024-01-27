@@ -75,40 +75,7 @@ export class FriendController {
     return data;
   }
 
-  // @Get('waiting-confirm')
-  // @ApiResponse({
-  //   status: HttpStatus.OK,
-  //   description: 'Danh sách lời mời kết bạn',
-  //   type: FriendResponseSwagger,
-  // })
-  // @ApiOperation({ summary: 'Lấy danh sách lời mời kết bạn' })
-  // async getFriendRequest(
-  //   @Request() req: RequestWithUser,
-  //   @Query() query: RequestFriendWithQueryDto,
-  // ) {
-  //   const data = await this.friendService.getRequestFriend(req.user._id, query);
-  //   return data;
-  // }
-
-  // @Get('waiting-request')
-  // @ApiResponse({
-  //   status: HttpStatus.OK,
-  //   description: 'Danh sách gửi lời mời kết bạn',
-  //   type: FriendResponseSwagger,
-  // })
-  // @ApiOperation({ summary: 'Lấy danh sách gửi lời mời kết bạn' })
-  // async getFriendSendRequest(
-  //   @Request() req: RequestWithUser,
-  //   @Query() query: RequestFriendWithQueryDto,
-  // ) {
-  //   const data = await this.friendService.getSendRequestFriend(
-  //     req.user._id,
-  //     query,
-  //   );
-  //   return data;
-  // }
-
-  @Post(':id')
+  @Post('send')
   @ApiResponse({
     status: HttpStatus.OK,
     type: BaseResponse,
@@ -117,32 +84,16 @@ export class FriendController {
   @ApiOperation({ summary: 'Gửi lời mời kết bạn' })
   async sendFriendRequest(
     @Request() req: RequestWithUser,
-    @Param() param: RequestFriendWithParamDto,
+    @Query() query: RequestFriendWithParamDto,
   ) {
     const data = await this.friendService.sendFriendRequest(
       req.user._id,
-      param.id,
+      query._id,
     );
     return data;
   }
 
-  @Post(':id/qr-code')
-  @ApiResponse({
-    status: HttpStatus.OK,
-    type: BaseResponse,
-    description: 'Gửi lời mời kết bạn QRcode',
-  })
-  @ApiOperation({ summary: 'Gửi lời mời kết bạn QRcode' })
-  async sendFriendRequestQRcode(
-    @Request() req: RequestWithUser,
-    @Param() param: RequestFriendWithParamDto,
-  ) {
-    const data = await this.friendService.sendFriendRequestQRcode(
-      req.user._id,
-      param.id,
-    );
-    return data;
-  }
+  // @Post(':id/qr-code')
 
   @Post(':id/accept')
   @ApiResponse({
@@ -157,7 +108,7 @@ export class FriendController {
   ) {
     const data = await this.friendService.acceptFriendRequest(
       req.user._id,
-      param.id,
+      param._id,
     );
     return data;
   }
@@ -175,7 +126,7 @@ export class FriendController {
   ) {
     const data = await this.friendService.deniedFriendRequest(
       req.user._id,
-      param.id,
+      param._id,
     );
     return data;
   }
@@ -193,7 +144,7 @@ export class FriendController {
   ) {
     const data = await this.friendService.removeRequestFriend(
       req.user._id,
-      param.id,
+      param._id,
     );
     return data;
   }

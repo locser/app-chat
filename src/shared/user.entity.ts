@@ -39,7 +39,6 @@ export class User extends BaseModel {
     type: 'string',
     nullable: false,
     default: '',
-    select: false,
   })
   password: string;
 

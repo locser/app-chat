@@ -18,8 +18,6 @@ import {
 import { BaseResponse } from 'src/shared/base-response.response';
 import { DetailConversation } from './dto/detail-conversation.dto';
 import { DetailConversationResponse } from './response/detail-conversation.response';
-import { ObjectId } from 'mongodb';
-import { UserResponse } from './response/user.response';
 
 @Injectable()
 export class ConversationService {
@@ -49,8 +47,8 @@ export class ConversationService {
       );
 
     const member = await this.userModel.findOne({
-      _id: member_id, status: USER_STATUS.ACTIVE 
-    
+      _id: member_id,
+      status: USER_STATUS.ACTIVE,
     });
 
     if (!member)
@@ -99,25 +97,31 @@ export class ConversationService {
 
     return new BaseResponse(201, 'OK', { conversation_id: conversation.id });
   }
-  async detailConversation(user_id:Types.ObjectId,body:DetailConversation){
-  
-    const detail : any = await this.conversationModel.findById(body.conversation_id)
 
-    const member   = await this.conversationMemberModel.find({conversation_id:body.conversation_id})
-    .populate('user_id','avatar full_name _id')
-    .exec()
-    if(detail.type == 2){
-      const other = member.filter((item)=>{
-        return item.user_id._id != user_id
-      })
-      detail.name = other[0].user_id.full_name
-      detail.avatar = other[0].user_id.avatar
+  async detailConversation(user_id: Types.ObjectId, body: DetailConversation) {
+    const detail: any = await this.conversationModel.findById(
+      body.conversation_id,
+    );
+    console.log('ConversationService ~ detailConversation ~ detail:', detail);
+
+    const member = await this.conversationMemberModel
+      .find({ conversation_id: body.conversation_id })
+      .populate('user_id', 'avatar full_name _id')
+      .exec();
+    if (detail.type == 2) {
+      const other = member.filter((item) => {
+        return item.user_id._id != user_id;
+      });
+      // detail.name = other[0].user_id.full_name;
+      // detail.avatar = other[0].user_id.avatar;
     }
     const result = {
       ...detail,
-     members: member.map((item)=>{return item.user_id})
-    }
-    
-    return new DetailConversationResponse(result)
+      members: member.map((item) => {
+        return item.user_id;
+      }),
+    };
+
+    return new DetailConversationResponse(result);
   }
 }
