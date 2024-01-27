@@ -46,13 +46,12 @@ export class FriendService {
     if (user_id == target_id)
       throw new ExceptionResponse(
         HttpStatus.BAD_REQUEST,
-        '#02-sendFriendRequest: Không thể tự gửi lời mời kết bạn đến chính mình',
+        'Không thể tự gửi lời mời kết bạn đến chính mình',
       );
-    const existUser = await this.userModel.exists({
-      where: {
-        id: target_id,
-        status: USER_STATUS.ACTIVE,
-      },
+
+    const existUser = await this.userModel.findOne({
+      _id: target_id,
+      status: USER_STATUS.ACTIVE,
     });
 
     // báo lỗi khi người dùng không tồn tại, không active
@@ -62,6 +61,58 @@ export class FriendService {
         '#01-sendFriendRequest: Người dùng này không tồn tại',
       );
     }
+
+    const hasBlock = await this.checkBlockedUsers(user_id, target_id);
+    if (hasBlock) {
+      throw new ExceptionResponse(
+        HttpStatus.BAD_REQUEST,
+        'Nguời dùng này đã chặn bạn',
+      );
+    }
+
+    const checkFriendType = await this.friendModel.findOne({
+      user_id: user_id,
+      user_friend_id: target_id,
+    });
+    console.log(
+      'FriendService ~ sendFriendRequest ~ checkFriendType:',
+      checkFriendType,
+    );
+
+    if (checkFriendType?.type == 3) {
+      throw new ExceptionResponse(
+        HttpStatus.BAD_REQUEST,
+        'Nguời dùng đã nhận lời mời kết bạn của bạn rồi, hãy chờ họ phản hồi',
+      );
+    }
+
+    if (checkFriendType?.type == 2) {
+      throw new ExceptionResponse(
+        HttpStatus.BAD_REQUEST,
+        'Nguời dùng đã gửi lời mời kết bạn cho bạn rồi, hãy phản hồi nó',
+      );
+    }
+    if (checkFriendType?.type == 4) {
+      throw new ExceptionResponse(
+        HttpStatus.BAD_REQUEST,
+        'Hai người đã là bạn bè',
+      );
+    }
+
+    await this.friendModel.create(
+      {
+        user_id: user_id,
+        user_friend_id: target_id,
+        type: 3, // chowf phan hoi
+      },
+      {
+        user_friend_id: user_id,
+        user_id: target_id,
+        type: 2, // chowf xac nhan
+      },
+    );
+
+    return new BaseResponse(200, 'OK', null);
   }
 
   async syncPhone(user_id: Types.ObjectId, syncFriendDto: SyncFriendDto) {
