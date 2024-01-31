@@ -8,6 +8,10 @@ import {
   ConversationMember,
   ConversationMemberSchema,
   ConversationSchema,
+  Message,
+  MessageSchema,
+  User,
+  UserSchema,
 } from 'src/shared';
 
 @Module({
@@ -28,6 +32,14 @@ import {
       {
         name: Conversation.name,
         schema: ConversationSchema,
+      },
+      {
+        name: Message.name,
+        schema: MessageSchema,
+      },
+      {
+        name: User.name,
+        schema: UserSchema,
       },
     ]),
   ],

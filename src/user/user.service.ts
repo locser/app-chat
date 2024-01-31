@@ -7,6 +7,17 @@ import { UserProfileResponse } from './response/user-profile.response';
 
 @Injectable()
 export class UserService {
+  async findUserByPhone(_id: Types.ObjectId, phone: string) {
+    const user = await this.userModel.findOne({
+      phone: phone,
+    });
+
+    if (!user) {
+      throw new ExceptionResponse(404, 'Không tìm thấy user');
+    }
+
+    return user;
+  }
   constructor(
     @InjectModel(User.name)
     private readonly userModel: Model<User>,
@@ -14,8 +25,6 @@ export class UserService {
 
   async updateUser(req: RequestWithUser, body: Partial<User>) {
     const { password, phone, status, role, ...updateData } = body;
-
-    console.log('data update', { ...updateData }, req.user._id);
 
     const userUpdated = await this.userModel.findOneAndUpdate(
       { _id: req.user._id },

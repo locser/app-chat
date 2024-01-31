@@ -13,8 +13,9 @@ import {
 import { Server, Socket } from 'socket.io';
 import { ConnectionService } from './connection.service';
 // import { ExceptionResponse } from 'src/shared';
-import { SocketWithUser } from 'src/shared';
+import { Conversation, Message, SocketWithUser, User } from 'src/shared';
 import { JoinRoomDto } from './dto/join-room.dto';
+import { MessageTextDto } from './dto/message-text.dto';
 
 @WebSocketGateway({
   cors: {
@@ -29,7 +30,6 @@ export class ConnectionGateway
 
   constructor(
     private readonly connectionService: ConnectionService,
-    // private logger: Logger,
     private jwtService: JwtService,
   ) {}
   afterInit() {
@@ -60,7 +60,6 @@ export class ConnectionGateway
         throw new WsException(`Token không chính xác, nghi vấn hacker gà!`);
 
       client['user'] = payload;
-      console.log('handleConnection ~ payload:', payload);
 
       client.join(payload._id.toString());
     } catch (error) {
@@ -97,20 +96,26 @@ export class ConnectionGateway
       }
 
       const room = data.conversation_id.toString();
-      console.log('room:', room);
 
       client.join(room);
 
       this.server.to(room).emit('join-room', {
         event: 'join-room',
-        user: client.user,
-        conversation_id: data.conversation_id,
+        message: '',
+        data: {
+          user_id: client.user._id.toString(),
+          conversation_id: data.conversation_id,
+        },
       });
     } catch (e) {
       console.log('error join - room:', e);
-      this.server.to(client.user._id.toString()).emit('join-room', {
-        error: e,
-      });
+
+      this.emitSocketError(
+        client.user._id.toString(),
+        'join-room',
+        'join-room lỗi',
+        null,
+      );
     }
   }
 
@@ -129,13 +134,15 @@ export class ConnectionGateway
       });
 
       client.leave(room);
-      console.log('user roi room');
     } catch (error) {
       console.log('error join - room:', error);
 
-      this.server
-        .to(client.user._id.toString())
-        .emit('leave-room', JSON.parse(error));
+      this.emitSocketError(
+        client.user._id.toString(),
+        'leave-room',
+        'leave-room lỗi',
+        null,
+      );
     }
   }
 
@@ -148,8 +155,11 @@ export class ConnectionGateway
       const room = data.conversation_id.toString();
       this.server.to(room).emit('typing-on', {
         event: 'typing-on',
-        user: client.user,
-        conversation_id: room,
+        message: '',
+        data: {
+          user_id: client.user._id.toString(),
+          conversation_id: room,
+        },
       });
     } catch (error) {
       console.log('handleTypingOff ~ error:', error);
@@ -171,11 +181,81 @@ export class ConnectionGateway
       });
     } catch (error) {
       console.log('handleTypingOff ~ error:', error);
-      this.server.to(client.user._id.toString()).emit('typing-off', {
-        event: 'typing-off',
-        user: client.user,
-        conversation_id: data.conversation_id,
-      });
+
+      this.emitSocketError(
+        client.user._id.toString(),
+        'typing-off',
+        'Bạn không có quyền truy cập cuộc trò chuyện này!!',
+        {
+          user_id: client.user._id.toString(),
+          conversation_id: data.conversation_id,
+        },
+      );
     }
+  }
+
+  @SubscribeMessage('message-text')
+  async handleMessageText(
+    @ConnectedSocket() client: SocketWithUser,
+    @MessageBody() data: MessageTextDto,
+  ) {
+    try {
+      const hasAccess = await this.connectionService.beforeJoinRoom(
+        client.user._id,
+        data.conversation_id,
+      );
+
+      if (!hasAccess) {
+        throw new WsException('Bạn không có quyền truy cập!!');
+      }
+
+      const { message, conversation } =
+        await this.connectionService.handleMessage(client.user._id, data);
+
+      // const messageResponse = new MessageResponse();
+      this.emitSocketMessage(
+        client.user,
+        message,
+        conversation,
+        'message-text',
+      );
+    } catch (error) {
+      console.log('error:', error);
+      this.emitSocketError(
+        client.user._id.toString(),
+        'message-text',
+        'Bạn không có quyền truy cập cuộc trò chuyện này!!',
+        error,
+      );
+    }
+  }
+
+  /** SUB FUNCTION */
+
+  async emitSocketError(
+    user_id: string,
+    event_error: string,
+    message: string,
+    error: any,
+  ) {
+    this.server.to(user_id).emit(event_error, {
+      event: event_error,
+      message: message,
+      data: error,
+    });
+  }
+  async emitSocketMessage(
+    user: User,
+    new_message: Message,
+    conversation: Conversation,
+    emit_socket: string,
+  ) {
+    const to = conversation.members.map(String);
+
+    this.server.to(to).emit(emit_socket, {
+      user: user,
+      conversation: conversation,
+      message: new_message,
+    });
   }
 }
