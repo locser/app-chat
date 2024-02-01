@@ -1,6 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
 import * as moment from 'moment';
-import { Types } from 'mongoose';
 import { Role, USER_STATUS } from 'src/enum';
 import { User } from 'src/shared';
 
@@ -63,12 +62,12 @@ export class UserProfileResponse {
   role: string;
 
   @ApiProperty({
-    type: Types.ObjectId,
+    type: String,
   })
-  _id: Types.ObjectId;
+  _id: string;
 
   constructor(user: Partial<User>) {
-    this._id = user?._id || new Types.ObjectId();
+    this._id = user?._id.toString() || '';
     this.avatar = user?.avatar || '';
     this.full_name = user?.full_name || '';
     this.nick_name = user?.nick_name || '';

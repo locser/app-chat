@@ -29,7 +29,7 @@ export class ConversationController {
     @Request() req: RequestWithUser,
     @Body() createConversation: CreateConversationDto,
   ) {
-    const data = await this.conversationService.createNewConversation(
+    const data = await this.conversationService.createNewIndividualConversation(
       req.user._id,
       createConversation,
     );

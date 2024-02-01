@@ -1,13 +1,12 @@
-import { BaseModel } from './base-model.entity';
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import * as moment from 'moment';
+import { Timestamp } from 'mongodb';
+import { BOOLEAN } from 'src/enum/common.enum';
 import {
   CONVERSATION_STATUS,
   CONVERSATION_TYPE,
 } from 'src/enum/conversation.enum';
-import { BOOLEAN } from 'src/enum/common.enum';
-import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Types } from 'mongoose';
-import { Timestamp } from 'mongodb';
-import * as moment from 'moment';
+import { BaseModel } from './base-model.entity';
 
 @Schema({
   timestamps: {
@@ -44,7 +43,7 @@ export class Conversation extends BaseModel {
     array: true,
     default: [],
   })
-  members: Types.ObjectId[];
+  members: string[];
 
   @Prop({
     type: 'string',
@@ -85,7 +84,7 @@ export class Conversation extends BaseModel {
   is_send_message: BOOLEAN;
 
   @Prop({
-    type: Types.ObjectId,
+    type: String,
     ref: 'Message',
     nullable: true,
     default: '',

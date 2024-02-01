@@ -2,14 +2,15 @@ import { HttpStatus, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectModel } from '@nestjs/mongoose';
 import * as bcrypt from 'bcrypt';
-import { Model, Types } from 'mongoose';
+import { Model } from 'mongoose';
 import { USER_STATUS } from 'src/enum';
 import { ExceptionResponse, User } from 'src/shared';
 import { BaseResponse } from 'src/shared/base-response.response';
+import { UserProfileResponse } from 'src/user/response/user-profile.response';
+import { ChangePasswordDto } from './dto/change-password.dto';
 import { LoginDto } from './dto/user-sign-in.dto';
 import { SignUpDto } from './dto/user-sign-up.dto';
-import { ChangePasswordDto } from './dto/change-password.dto';
-import { UserProfileResponse } from 'src/user/response/user-profile.response';
+import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class AuthService {
@@ -92,26 +93,24 @@ export class AuthService {
 
       const hashedPassword = await bcrypt.hash(signUpDto.password, 5);
 
-      const newUser = await this.userModel.create(
-        new UserProfileResponse({
-          full_name: signUpDto.full_name,
-          nick_name: signUpDto.nick_name,
-          phone: signUpDto.phone,
-          password: hashedPassword,
-        }),
-      ); // TODO: Generate a JWT and return it here
-      // instead of the user object
-      return new BaseResponse(200, 'OK', newUser);
+      console.log('aaaaaaaaaaaaaa');
+
+      const newUser = await this.userModel.create({
+        _id: uuidv4(),
+        full_name: signUpDto.full_name,
+        nick_name: signUpDto.nick_name,
+        phone: signUpDto.phone,
+        password: hashedPassword,
+      }); // TODO: Generate a JWT and return it here
+
+      return new BaseResponse(200, 'OK', new UserProfileResponse(newUser));
     } catch (error) {
       console.log('AuthService ~ signUp ~ error:', error);
       throw new ExceptionResponse(400, 'ERROR', error);
     }
   }
 
-  async changePassword(
-    _id: Types.ObjectId,
-    changePasswordDto: ChangePasswordDto,
-  ) {
+  async changePassword(_id: string, changePasswordDto: ChangePasswordDto) {
     const { old_password, new_password } = changePasswordDto;
 
     if (old_password == new_password) {

@@ -1,6 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString } from 'class-validator';
-import { Types } from 'mongoose';
+import { IsMongoId } from 'class-validator';
 
 export class FriendWithParamDto {
   @ApiProperty({
@@ -8,8 +7,8 @@ export class FriendWithParamDto {
     example: 99453,
     description: 'id của người dùng muốn lấy danh sách bạn bè',
   })
-  @IsString({
-    message: '$property phải là số nguyên dương',
+  @IsMongoId({
+    message: 'string không hợp lệ',
   })
-  id: Types.ObjectId;
+  id: string;
 }

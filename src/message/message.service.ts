@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { Model } from 'mongoose';
 import { Conversation, Message, User } from 'src/shared';
 import { GetAllMessagesDto } from './dto/get-all-messages.dto';
 
@@ -18,7 +18,7 @@ export class MessageService {
   ) {}
 
   async getMessageList(
-    user_id: Types.ObjectId,
+    user_id: string,
     conversation_id: string,
     query: GetAllMessagesDto,
   ) {

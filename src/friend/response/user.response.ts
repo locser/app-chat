@@ -52,7 +52,7 @@ export class BaseUserResponse {
   gender: number;
 
   constructor(data?: any) {
-    this.user_id = data?.user_id || '';
+    this.user_id = data?._id || '';
     this.avatar = data?.avatar || '';
     this.full_name = data?.full_name || '';
     this.nick_name = data?.nick_name || '';

@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import mongoose, { Types } from 'mongoose';
+import mongoose from 'mongoose';
 import { MESSAGE_STATUS, MESSAGE_TYPE } from 'src/enum/message.enum';
 import { BaseModel } from './base-model.entity';
 
@@ -44,10 +44,10 @@ export class Message extends BaseModel {
   media: string[];
 
   @Prop({
-    type: mongoose.Schema.Types.Mixed,
+    type: String,
     nullable: true,
   })
-  sticker: any;
+  sticker: string;
 
   @Prop({
     type: 'number',
@@ -75,7 +75,7 @@ export class Message extends BaseModel {
   @Prop({
     nullable: true,
     default: [],
-    type: Types.Array,
+    type: Array,
   })
   user_tag: any;
 }

@@ -2,7 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { BaseUserResponse } from './user.response';
 import { BaseResponse } from 'src/shared/base-response.response';
 
-enum ContactTypeSwagger {
+enum Contactstringwagger {
   'ITS_ME' = 0, // ITS_ME // chính mình
   'NOT_FRIEND' = 1, //chưa là bạn
   'WAITING_CONFIRM' = 2, // - WAITING_CONFIRM // họ gửi lời mời, đợi mình xác nhận
@@ -13,7 +13,7 @@ enum ContactTypeSwagger {
 export class FriendResponse extends BaseUserResponse {
   @ApiProperty({
     type: Number,
-    enum: ContactTypeSwagger,
+    enum: Contactstringwagger,
     example: 0,
     description: `
     0 - ITS_ME // chính mình

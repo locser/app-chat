@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { Model } from 'mongoose';
 import { CONVERSATION_STATUS, MESSAGE_TYPE } from 'src/enum';
 import {
   Conversation,
@@ -13,7 +13,7 @@ import { MessageTextDto } from './dto/message-text.dto';
 
 @Injectable()
 export class ConnectionService {
-  async handleMessage(user_id: Types.ObjectId, data: MessageTextDto) {
+  async handleMessage(user_id: string, data: MessageTextDto) {
     const { type, conversation_id } = data;
 
     if (!type)
@@ -60,8 +60,8 @@ export class ConnectionService {
   ) {}
 
   async checkValidConversation(
-    user_id: Types.ObjectId,
-    conversation_id: Types.ObjectId,
+    user_id: string,
+    conversation_id: string,
   ): Promise<Conversation> {
     const conversation = await this.conversationModel
       .findOne({
@@ -77,10 +77,7 @@ export class ConnectionService {
     return conversation;
   }
 
-  async beforeJoinRoom(
-    user_id: Types.ObjectId,
-    conversation_id: Types.ObjectId,
-  ) {
+  async beforeJoinRoom(user_id: string, conversation_id: string) {
     const hasAccess = await this.conversationMemberModel.findOne({
       user_id: user_id,
       conversation_id: conversation_id,
@@ -90,7 +87,7 @@ export class ConnectionService {
 
   /** SUB FUNCTION */
   private async validateMessage(
-    user_id: Types.ObjectId,
+    user_id: string,
     type: MESSAGE_TYPE,
     data?: any,
   ) {
@@ -106,7 +103,7 @@ export class ConnectionService {
     return newMessage;
   }
 
-  private async validateTextMessage(user_id: Types.ObjectId, data: any) {
+  private async validateTextMessage(user_id: string, data: any) {
     const { conversation_id, message, message_reply_id, user_tags } = data;
 
     if (!conversation_id || !message?.trim()) {
@@ -148,10 +145,7 @@ export class ConnectionService {
     return newMessage;
   }
 
-  private async checkValidMessage(
-    message_id: Types.ObjectId,
-    conversation_id: Types.ObjectId,
-  ) {
+  private async checkValidMessage(message_id: string, conversation_id: string) {
     const message = await this.messageModel.findOne({
       _id: message_id,
       conversation_id: conversation_id,

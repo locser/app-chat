@@ -1,6 +1,12 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
-import { Model, Types } from 'mongoose';
-import { CreateConversationDto } from './dto/create-conversation.dto';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import {
+  CONVERSATION_MEMBER_PERMISSION,
+  CONVERSATION_STATUS,
+  CONVERSATION_TYPE,
+  USER_STATUS,
+} from 'src/enum';
 import {
   Conversation,
   ConversationMember,
@@ -8,14 +14,8 @@ import {
   ExceptionResponse,
   User,
 } from 'src/shared';
-import { InjectModel } from '@nestjs/mongoose';
-import {
-  CONVERSATION_TYPE,
-  CONVERSATION_STATUS,
-  CONVERSATION_MEMBER_PERMISSION,
-  USER_STATUS,
-} from 'src/enum';
 import { BaseResponse } from 'src/shared/base-response.response';
+import { CreateConversationDto } from './dto/create-conversation.dto';
 import { DetailConversation } from './dto/detail-conversation.dto';
 import { DetailConversationResponse } from './response/detail-conversation.response';
 
@@ -35,11 +35,11 @@ export class ConversationService {
     private readonly conversationMemberWaitingModel: Model<ConversationMemberWaitingConfirm>,
   ) {}
 
-  async createNewConversation(
-    user_id: Types.ObjectId,
+  public async createNewIndividualConversation(
+    user_id: string,
     createConversation: CreateConversationDto,
   ) {
-    const member_id: Types.ObjectId = createConversation.member_id;
+    const member_id: string = createConversation.member_id;
     if (user_id == member_id)
       throw new ExceptionResponse(
         HttpStatus.BAD_REQUEST,
@@ -98,7 +98,7 @@ export class ConversationService {
     return new BaseResponse(201, 'OK', { conversation_id: conversation.id });
   }
 
-  async detailConversation(user_id: Types.ObjectId, body: DetailConversation) {
+  async detailConversation(user_id: string, body: DetailConversation) {
     const detail: any = await this.conversationModel.findById(
       body.conversation_id,
     );
@@ -110,7 +110,7 @@ export class ConversationService {
       .exec();
     if (detail.type == 2) {
       const other = member.filter((item) => {
-        return item.user_id._id != user_id;
+        return item.user_id != user_id;
       });
       // detail.name = other[0].user_id.full_name;
       // detail.avatar = other[0].user_id.avatar;

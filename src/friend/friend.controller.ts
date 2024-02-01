@@ -86,6 +86,8 @@ export class FriendController {
     @Request() req: RequestWithUser,
     @Query() query: RequestFriendWithParamDto,
   ) {
+    console.log('FriendController ~ query._id,:', query._id);
+
     const data = await this.friendService.sendFriendRequest(
       req.user._id,
       query._id,
@@ -95,7 +97,7 @@ export class FriendController {
 
   // @Post(':id/qr-code')
 
-  @Post(':id/accept')
+  @Post('accept')
   @ApiResponse({
     status: HttpStatus.OK,
     type: BaseResponse,
@@ -104,12 +106,14 @@ export class FriendController {
   @ApiOperation({ summary: 'Chấp nhận lời mời kết bạn' })
   async acceptFriend(
     @Request() req: RequestWithUser,
-    @Param() param: RequestFriendWithParamDto,
+    @Query() param: RequestFriendWithParamDto,
   ) {
     const data = await this.friendService.acceptFriendRequest(
       req.user._id,
       param._id,
     );
+    console.log('FriendController ~ param._id:', param._id);
+
     return data;
   }
 

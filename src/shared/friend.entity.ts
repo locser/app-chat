@@ -1,7 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { BaseModel } from './base-model.entity';
-import { Types } from 'mongoose';
 import * as moment from 'moment';
+import { BaseModel } from './base-model.entity';
 
 @Schema({
   collection: 'friends',
@@ -16,15 +15,15 @@ import * as moment from 'moment';
 })
 export class Friend extends BaseModel {
   @Prop({
-    type: Types.ObjectId,
+    type: String,
   })
-  user_id: Types.ObjectId;
+  user_id: string;
 
   @Prop({
-    type: Types.ObjectId,
+    type: String,
     ref: 'User',
   })
-  user_friend_id: Types.ObjectId;
+  user_friend_id: string;
 
   @Prop({
     type: Number,

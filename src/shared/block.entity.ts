@@ -1,6 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { BaseModel } from './base-model.entity';
-import { Types } from 'mongoose';
 
 @Schema({
   timestamps: {
@@ -14,13 +13,13 @@ import { Types } from 'mongoose';
 })
 export class Block extends BaseModel {
   @Prop({
-    type: Types.ObjectId,
+    type: String,
     ref: 'User',
   })
   user_id: string;
 
   @Prop({
-    type: Types.ObjectId,
+    type: String,
     ref: 'User',
   })
   user_block_id: string;
