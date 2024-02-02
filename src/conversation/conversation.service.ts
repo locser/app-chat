@@ -22,27 +22,6 @@ import { QueryConversation } from './response/query-conversation.dto';
 
 @Injectable()
 export class ConversationService {
-  async getListConversation(user_id: string, query: QueryConversation) {
-    const { limit, position } = query;
-    try {
-      const conversations = await this.conversationModel
-        .find({
-          members: { $in: [user_id] },
-        })
-        .sort({ updated_at: 'desc' })
-        .limit(+limit);
-
-      console.log(
-        'ConversationService ~ getListConversation ~ conversations:',
-        conversations,
-      );
-
-      return new BaseResponse(200, 'OK', conversations);
-    } catch (error) {
-      console.log('ConversationService ~ getListConversation ~ error:', error);
-      return new BaseResponse(400, 'FAIL', error);
-    }
-  }
   constructor(
     @InjectModel(User.name)
     private readonly userModel: Model<User>,
@@ -118,6 +97,31 @@ export class ConversationService {
     );
 
     return new BaseResponse(201, 'OK', { conversation_id: conversation.id });
+  }
+
+  async getListConversation(user_id: string, query_param: QueryConversation) {
+    const { limit, position } = query_param;
+    try {
+      const query = {
+        members: { $in: [user_id] },
+        last_message_id: { $ne: '' },
+        status: CONVERSATION_STATUS.ACTIVE,
+      };
+
+      if (position) {
+        query['updated_at'] = { $lt: position };
+      }
+
+      const conversations = await this.conversationModel
+        .find(query)
+        .sort({ updated_at: 'desc' })
+        .limit(+limit);
+
+      return new BaseResponse(200, 'OK', conversations);
+    } catch (error) {
+      console.log('ConversationService ~ getListConversation ~ error:', error);
+      return new BaseResponse(400, 'FAIL', error);
+    }
   }
 
   async detailConversation(user_id: string, body: DetailConversation) {
