@@ -10,3 +10,4 @@ export * from './sticker.entity';
 export * from './base-model.entity';
 export * from './exception-response';
 export * from './client-user-socket';
+export * from './user-base.response';

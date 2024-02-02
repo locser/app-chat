@@ -10,6 +10,7 @@ import { ConversationModule } from './conversation/conversation.module';
 import { FriendModule } from './friend/friend.module';
 import { MessageModule } from './message/message.module';
 import { UserModule } from './user/user.module';
+import { ConversationGroupModule } from './conversation-group/conversation-group.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { UserModule } from './user/user.module';
     MessageModule,
     FriendModule,
     ConnectionModule,
+    ConversationGroupModule,
   ], //
   controllers: [AppController],
 

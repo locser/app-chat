@@ -39,6 +39,11 @@ export class AuthService {
       secret: process.env.JWT_SECRET,
     });
 
+    await this.userModel.updateOne(
+      { _id: new Types.ObjectId(hasUser._id) },
+      { access_token: access_token },
+    );
+
     return new BaseResponse(200, 'OK', {
       _id: hasUser._id,
       full_name: hasUser.full_name,
@@ -138,11 +143,9 @@ export class AuthService {
   }
 
   async getAuthenticatedUser(filter: object, password: string): Promise<User> {
-    console.log('AuthService ~ getAuthenticatedUser ~ password:', password);
     try {
       // get user
       const user = await this.userModel.findOne(filter);
-      console.log('AuthService ~ getAuthenticatedUser ~ user:', user);
 
       if (!user) {
         throw new ExceptionResponse(

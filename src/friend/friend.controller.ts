@@ -9,7 +9,7 @@ import {
   Request,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { RequestWithUser } from 'src/auth/dto/requests.type';
+import { RequestWithUser } from 'src/shared/requests.type';
 import { BaseResponse } from 'src/shared/base-response.response';
 import { FriendWithParamDto } from './dto/friend-with-param.dto';
 import { FriendWithQueryDto } from './dto/friend-with-query.dto';

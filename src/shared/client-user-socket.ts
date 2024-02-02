@@ -1,8 +1,8 @@
 import { Socket } from 'socket.io';
-import { User } from './user.entity';
+import { UserResponse } from './user-base.response';
 
 export class SocketWithUser extends Socket {
-  user: User;
+  user: UserResponse;
 
   device: string;
 }
