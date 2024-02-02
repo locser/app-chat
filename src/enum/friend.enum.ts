@@ -1,0 +1,7 @@
+export enum FRIEND_TYPE {
+  NOT_FRIEND = 0,
+  ME = 1,
+  WAITING_CONFIRM = 2,
+  WAITING_RESPONSE = 3,
+  FRIEND = 4,
+}

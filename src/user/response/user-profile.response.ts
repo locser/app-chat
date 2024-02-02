@@ -50,9 +50,9 @@ export class UserProfileResponse {
   })
   email: string;
   @ApiProperty({
-    type: Number,
+    type: String,
   })
-  last_connect: number;
+  last_connect: string;
   @ApiProperty({
     type: Number,
   })
@@ -80,7 +80,9 @@ export class UserProfileResponse {
     this.birthday = user?.birthday || '';
     this.description = user?.description || '';
     this.email = user?.email || '';
-    this.last_connect = user?.last_connect || +moment();
+    this.last_connect =
+      moment(user?.last_connect).format('DD/MM/YYYY') ||
+      moment().format('DD/MM/YYYY');
     this.status = user?.status || USER_STATUS.ACTIVE;
     this.role = user?.role || Role.User;
   }

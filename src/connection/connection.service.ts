@@ -61,7 +61,7 @@ export class ConnectionService {
 
   async checkValidConversation(
     user_id: Types.ObjectId,
-    conversation_id: Types.ObjectId,
+    conversation_id: string,
   ): Promise<Conversation> {
     const conversation = await this.conversationModel
       .findOne({

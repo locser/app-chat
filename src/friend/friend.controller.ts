@@ -41,40 +41,6 @@ export class FriendController {
     return data;
   }
 
-  @Post(':id/remove')
-  @ApiResponse({
-    type: BaseResponse,
-    description: 'Xoá bạn bè',
-  })
-  @ApiOperation({ summary: 'Xoá bạn bè' })
-  async removeFriend(
-    @Request() req: RequestWithUser,
-    @Param() param: FriendWithParamDto,
-  ) {
-    const data = await this.friendService.removeFriend(req.user._id, param.id);
-    return data;
-  }
-
-  @Post('sync')
-  @ApiOperation({
-    summary: 'Đồng Bộ danh bạ',
-  })
-  @ApiResponse({
-    status: 200,
-    type: ContactResponseSwagger,
-    description: 'Đồng bộ danh bạ - truyền vào một array số điện thoại',
-  })
-  async sync(
-    @Body() syncFriendDto: SyncFriendDto,
-    @Request() req: RequestWithUser,
-  ) {
-    const data = await this.friendService.syncPhone(
-      req.user._id,
-      syncFriendDto,
-    );
-    return data;
-  }
-
   @Post('send')
   @ApiResponse({
     status: HttpStatus.OK,
@@ -93,9 +59,7 @@ export class FriendController {
     return data;
   }
 
-  // @Post(':id/qr-code')
-
-  @Post(':id/accept')
+  @Post('accept')
   @ApiResponse({
     status: HttpStatus.OK,
     type: BaseResponse,
@@ -104,7 +68,7 @@ export class FriendController {
   @ApiOperation({ summary: 'Chấp nhận lời mời kết bạn' })
   async acceptFriend(
     @Request() req: RequestWithUser,
-    @Param() param: RequestFriendWithParamDto,
+    @Query() param: RequestFriendWithParamDto,
   ) {
     const data = await this.friendService.acceptFriendRequest(
       req.user._id,
@@ -149,15 +113,49 @@ export class FriendController {
     return data;
   }
 
-  @Get('count-tab')
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'Số lượng yêu cầu kết bạn, lời mời kết bạn và số lượng bạn bè',
-    type: CountFriendRequestsResponseSwagger,
-  })
-  @ApiOperation({ summary: 'Số lượng yêu cầu kết bạn và lời mời kết bạn' })
-  async countFriendRequests(@Request() req: RequestWithUser) {
-    const data = await this.friendService.countFriendRequests(req.user._id);
-    return data;
-  }
+  // @Get('count-tab')
+  // @ApiResponse({
+  //   status: HttpStatus.OK,
+  //   description: 'Số lượng yêu cầu kết bạn, lời mời kết bạn và số lượng bạn bè',
+  //   type: CountFriendRequestsResponseSwagger,
+  // })
+  // @ApiOperation({ summary: 'Số lượng yêu cầu kết bạn và lời mời kết bạn' })
+  // async countFriendRequests(@Request() req: RequestWithUser) {
+  //   const data = await this.friendService.countFriendRequests(req.user._id);
+  //   return data;
+  // }
+
+  // @Post('sync')
+  // @ApiOperation({
+  //   summary: 'Đồng Bộ danh bạ',
+  // })
+  // @ApiResponse({
+  //   status: 200,
+  //   type: ContactResponseSwagger,
+  //   description: 'Đồng bộ danh bạ - truyền vào một array số điện thoại',
+  // })
+  // async sync(
+  //   @Body() syncFriendDto: SyncFriendDto,
+  //   @Request() req: RequestWithUser,
+  // ) {
+  //   const data = await this.friendService.syncPhone(
+  //     req.user._id,
+  //     syncFriendDto,
+  //   );
+  //   return data;
+  // }
+
+  // @Post(':id/remove')
+  // @ApiResponse({
+  //   type: BaseResponse,
+  //   description: 'Xoá bạn bè',
+  // })
+  // @ApiOperation({ summary: 'Xoá bạn bè' })
+  // async removeFriend(
+  //   @Request() req: RequestWithUser,
+  //   @Param() param: FriendWithParamDto,
+  // ) {
+  //   const data = await this.friendService.removeFriend(req.user._id, param.id);
+  //   return data;
+  // }
 }

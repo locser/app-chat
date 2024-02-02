@@ -7,9 +7,9 @@ export class CreateConversationDto {
 
   @IsNotEmpty()
   @ApiProperty({
-    type: Types.ObjectId,
+    type: String,
     description: 'id của user muốn tạo cuộc trò truyện',
     example: 'ssssssss',
   })
-  member_id: Types.ObjectId;
+  member_id: string;
 }

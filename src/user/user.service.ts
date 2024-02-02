@@ -4,10 +4,11 @@ import { Model, Types } from 'mongoose';
 import { RequestWithUser } from 'src/auth/dto/requests.type';
 import { ExceptionResponse, User } from 'src/shared';
 import { UserProfileResponse } from './response/user-profile.response';
+import { BaseResponse } from 'src/shared/base-response.response';
 
 @Injectable()
 export class UserService {
-  async findUserByPhone(_id: Types.ObjectId, phone: string) {
+  async findUserByPhone(user_id: string, phone: string) {
     const user = await this.userModel.findOne({
       phone: phone,
     });
@@ -16,7 +17,7 @@ export class UserService {
       throw new ExceptionResponse(404, 'Không tìm thấy user');
     }
 
-    return user;
+    return new BaseResponse(200, 'OK', { user: new UserProfileResponse(user) });
   }
   constructor(
     @InjectModel(User.name)
@@ -43,7 +44,7 @@ export class UserService {
     };
   }
 
-  async getProfile(user_id: Types.ObjectId, target_id: Types.ObjectId) {
+  async getProfile(user_id: string, target_id: string) {
     const user = await this.userModel
       .findById(target_id)
       .select({ password: 0 });

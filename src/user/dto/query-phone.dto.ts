@@ -1,4 +1,4 @@
-import { IsNotEmpty, Length, Matches, Min } from 'class-validator';
+import { IsNotEmpty, Length, Matches } from 'class-validator';
 
 export class QueryPhone {
   @IsNotEmpty()

@@ -96,10 +96,10 @@ export class MessageTextDto {
     message: '$property không được trống',
   })
   @ApiProperty({
-    type: Types.ObjectId,
+    type: String,
     required: true,
   })
-  conversation_id: Types.ObjectId;
+  conversation_id: string;
 
   @ApiProperty({
     type: Number,
@@ -141,7 +141,7 @@ export class MessageTextDto {
 
   constructor(data: MessageTextDto) {
     this.message = data?.message || '';
-    this.conversation_id = data?.conversation_id || new Types.ObjectId();
+    this.conversation_id = data?.conversation_id || '';
     // this.tag = data.tag;
     // this.thumb = data.thumb;
     // this.link = data.link;

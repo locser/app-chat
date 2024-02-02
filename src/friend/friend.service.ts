@@ -1,7 +1,7 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { USER_STATUS } from 'src/enum';
+import { FRIEND_TYPE, USER_STATUS } from 'src/enum';
 import { ExceptionResponse, User } from 'src/shared';
 import { BaseResponse } from 'src/shared/base-response.response';
 import { Block } from 'src/shared/block.entity';
@@ -12,22 +12,17 @@ import { FriendResponse } from './response/friend.response';
 
 @Injectable()
 export class FriendService {
-  countFriendRequests(user_id: Types.ObjectId) {
+  countFriendRequests(user_id: string) {
     throw new Error('Method not implemented.');
   }
-  removeRequestFriend(user_id: Types.ObjectId, targetuser_id: Types.ObjectId) {
+  removeRequestFriend(user_id: string, targetuser_id: string) {
     throw new Error('Method not implemented.');
   }
-  deniedFriendRequest(user_id: Types.ObjectId, targetuser_id: Types.ObjectId) {
+  deniedFriendRequest(user_id: string, targetuser_id: string) {
     throw new Error('Method not implemented.');
   }
-  acceptFriendRequest(user_id: Types.ObjectId, targetuser_id: Types.ObjectId) {
-    throw new Error('Method not implemented.');
-  }
-  sendFriendRequestQRcode(
-    user_id: Types.ObjectId,
-    targetuser_id: Types.ObjectId,
-  ) {
+
+  sendFriendRequestQRcode(user_id: string, targetuser_id: string) {
     throw new Error('Method not implemented.');
   }
 
@@ -42,7 +37,7 @@ export class FriendService {
     private readonly blockModel: Model<Block>,
   ) {}
 
-  async sendFriendRequest(user_id: Types.ObjectId, target_id: Types.ObjectId) {
+  async sendFriendRequest(user_id: string, target_id: string) {
     if (user_id == target_id)
       throw new ExceptionResponse(
         HttpStatus.BAD_REQUEST,
@@ -74,10 +69,6 @@ export class FriendService {
       user_id: user_id,
       user_friend_id: target_id,
     });
-    console.log(
-      'FriendService ~ sendFriendRequest ~ checkFriendType:',
-      checkFriendType,
-    );
 
     if (checkFriendType?.type == 3) {
       throw new ExceptionResponse(
@@ -99,7 +90,7 @@ export class FriendService {
       );
     }
 
-    await this.friendModel.create(
+    const a = await this.friendModel.create(
       {
         user_id: user_id,
         user_friend_id: target_id,
@@ -111,11 +102,12 @@ export class FriendService {
         type: 2, // chowf xac nhan
       },
     );
+    console.log('FriendService ~ sendFriendRequest ~  a:', a);
 
     return new BaseResponse(200, 'OK', null);
   }
 
-  async syncPhone(user_id: Types.ObjectId, syncFriendDto: SyncFriendDto) {
+  async syncPhone(user_id: string, syncFriendDto: SyncFriendDto) {
     const listUserContact = syncFriendDto.contact.reduce(
       (listUser, contact) => {
         listUser[contact.phone] = contact.name;
@@ -168,15 +160,58 @@ export class FriendService {
       });
     });
   }
+  async acceptFriendRequest(user_id: string, target_id: string) {
+    try {
+      const friendType = await this.checkFriendType(
+        user_id.toString(),
+        target_id,
+      );
 
-  async removeFriend(user_id: Types.ObjectId, target_user_id: Types.ObjectId) {
-    if (user_id === target_user_id)
+      if (!friendType || !(friendType?.type == FRIEND_TYPE.WAITING_CONFIRM)) {
+        throw new ExceptionResponse(
+          400,
+          'Người này chưa gửi lời mời kết bạn tới bạn!',
+        );
+      }
+
+      await this.friendModel.updateMany(
+        {
+          $or: [
+            {
+              user_id: user_id,
+              user_friend_id: target_id,
+            },
+            {
+              user_id: target_id,
+              user_friend_id: user_id,
+            },
+          ],
+        },
+        { type: FRIEND_TYPE.FRIEND },
+      );
+
+      return new BaseResponse(200, 'OK');
+    } catch (error) {
+      console.log('FriendService ~ error:', error);
+      return new BaseResponse(400, 'FAIL', error);
+    }
+  }
+
+  async checkFriendType(user_id: string, target_id: string) {
+    return await this.friendModel.findOne({
+      user_id: user_id,
+      user_friend_id: target_id,
+    });
+  }
+
+  async removeFriend(user_id: string, target_id: string) {
+    if (user_id === target_id)
       throw new ExceptionResponse(
         HttpStatus.BAD_REQUEST,
         'Bạn không thể remove chính mình!',
       );
 
-    const targetUser = await this.userModel.exists({ _id: target_user_id });
+    const targetUser = await this.userModel.exists({ _id: target_id });
 
     if (!targetUser) {
       throw new ExceptionResponse(
@@ -187,34 +222,21 @@ export class FriendService {
 
     // Kiểm tra block
 
-    const hasBlock = await this.checkBlockedUsers(user_id, target_user_id);
+    const hasBlock = await this.checkBlockedUsers(user_id, target_id);
 
     if (hasBlock) {
       throw new ExceptionResponse(HttpStatus.BAD_REQUEST, 'Blocked');
     }
 
-    await this.removeFriendUser(user_id, target_user_id);
-    await this.removeFriendUser(target_user_id, user_id);
+    await this.removeFriendUser(user_id, target_id);
+    await this.removeFriendUser(target_id, user_id);
 
     return new BaseResponse(200, 'OK', null);
   }
 
-  async getFriend(currentUserId: Types.ObjectId, query: FriendWithQueryDto) {
+  async getFriend(currentUserId: string, query: FriendWithQueryDto) {
     try {
       // kiểm tra xem targetUser có phải mình không?
-
-      await this.friendModel.create(
-        {
-          user_id: currentUserId,
-          user_friend_id: currentUserId,
-          type: 4,
-        },
-        {
-          user_id: currentUserId,
-          user_friend_id: currentUserId,
-          type: 4,
-        },
-      );
 
       const { page = 1, limit = 20, type } = query;
 
@@ -252,20 +274,14 @@ export class FriendService {
     }
   }
 
-  async removeFriendUser(
-    user_id: Types.ObjectId,
-    target_user_id: Types.ObjectId,
-  ) {
+  async removeFriendUser(user_id: string, target_user_id: string) {
     return await this.friendModel.deleteOne({
       user_id: user_id,
       user_friend_id: target_user_id,
     });
   }
 
-  async checkBlockedUsers(
-    user_id: Types.ObjectId,
-    target_user_id: Types.ObjectId,
-  ) {
+  async checkBlockedUsers(user_id: string, target_user_id: string) {
     const block1 = await this.blockModel.exists({
       user_id: user_id,
       user_block_id: target_user_id,

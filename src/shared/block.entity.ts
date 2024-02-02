@@ -14,16 +14,16 @@ import { Types } from 'mongoose';
 })
 export class Block extends BaseModel {
   @Prop({
-    type: Types.ObjectId,
+    type: String,
     ref: 'User',
   })
-  user_id: string;
+  user_id: Types.ObjectId;
 
   @Prop({
-    type: Types.ObjectId,
+    type: String,
     ref: 'User',
   })
-  user_block_id: string;
+  user_block_id: Types.ObjectId;
 
   @Prop({
     type: Number,

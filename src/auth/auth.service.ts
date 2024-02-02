@@ -29,7 +29,7 @@ export class AuthService {
     );
 
     const payload = {
-      _id: hasUser._id,
+      _id: hasUser._id.toString(),
       role: hasUser.role,
       full_name: hasUser.full_name,
       avatar: hasUser.avatar,
@@ -108,10 +108,7 @@ export class AuthService {
     }
   }
 
-  async changePassword(
-    _id: Types.ObjectId,
-    changePasswordDto: ChangePasswordDto,
-  ) {
+  async changePassword(_id: string, changePasswordDto: ChangePasswordDto) {
     const { old_password, new_password } = changePasswordDto;
 
     if (old_password == new_password) {

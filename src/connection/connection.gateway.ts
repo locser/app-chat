@@ -16,6 +16,7 @@ import { ConnectionService } from './connection.service';
 import { Conversation, Message, SocketWithUser, User } from 'src/shared';
 import { JoinRoomDto } from './dto/join-room.dto';
 import { MessageTextDto } from './dto/message-text.dto';
+import { Types } from 'mongoose';
 
 @WebSocketGateway({
   cors: {
@@ -86,7 +87,7 @@ export class ConnectionGateway
       /** Kiểm tra dữ liệu vào */
       const hasAccess = await this.connectionService.beforeJoinRoom(
         client.user._id,
-        data.conversation_id,
+        new Types.ObjectId(data.conversation_id),
       );
 
       if (!hasAccess) {
@@ -202,7 +203,7 @@ export class ConnectionGateway
     try {
       const hasAccess = await this.connectionService.beforeJoinRoom(
         client.user._id,
-        data.conversation_id,
+        new Types.ObjectId(data.conversation_id),
       );
 
       if (!hasAccess) {
