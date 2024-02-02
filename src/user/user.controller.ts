@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Post, Query, Request } from '@nestjs/common';
-import { RequestWithUser } from 'src/auth/dto/requests.type';
+import { RequestWithUser } from 'src/shared/requests.type';
 import { User } from 'src/shared';
 import { QueryPhone } from './dto/query-phone.dto';
 import { UserService } from './user.service';

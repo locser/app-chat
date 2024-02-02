@@ -108,6 +108,12 @@ export class User extends BaseModel {
     enum: ['user', 'admin'],
   })
   role: Role;
+
+  @Prop({
+    type: 'string',
+    default: '',
+  })
+  access_token: string;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

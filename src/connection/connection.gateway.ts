@@ -13,10 +13,14 @@ import {
 import { Server, Socket } from 'socket.io';
 import { ConnectionService } from './connection.service';
 // import { ExceptionResponse } from 'src/shared';
-import { Conversation, Message, SocketWithUser, User } from 'src/shared';
+import {
+  Conversation,
+  Message,
+  SocketWithUser,
+  UserResponse,
+} from 'src/shared';
 import { JoinRoomDto } from './dto/join-room.dto';
 import { MessageTextDto } from './dto/message-text.dto';
-import { Types } from 'mongoose';
 
 @WebSocketGateway({
   cors: {
@@ -87,7 +91,7 @@ export class ConnectionGateway
       /** Kiểm tra dữ liệu vào */
       const hasAccess = await this.connectionService.beforeJoinRoom(
         client.user._id,
-        new Types.ObjectId(data.conversation_id),
+        data.conversation_id,
       );
 
       if (!hasAccess) {
@@ -203,7 +207,7 @@ export class ConnectionGateway
     try {
       const hasAccess = await this.connectionService.beforeJoinRoom(
         client.user._id,
-        new Types.ObjectId(data.conversation_id),
+        data.conversation_id,
       );
 
       if (!hasAccess) {
@@ -246,7 +250,7 @@ export class ConnectionGateway
     });
   }
   async emitSocketMessage(
-    user: User,
+    user: UserResponse,
     new_message: Message,
     conversation: Conversation,
     emit_socket: string,

@@ -8,7 +8,7 @@ import {
   Request,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { RequestWithUser } from 'src/auth/dto/requests.type';
+import { RequestWithUser } from 'src/shared/requests.type';
 import { ConversationService } from './conversation.service';
 import { CreateConversationDto } from './dto/create-conversation.dto';
 import { CreateConversationResponse } from './response/create-conversation-response';

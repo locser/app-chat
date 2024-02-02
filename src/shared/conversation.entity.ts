@@ -44,7 +44,7 @@ export class Conversation extends BaseModel {
     array: true,
     default: [],
   })
-  members: Types.ObjectId[];
+  members: string[];
 
   @Prop({
     type: 'string',

@@ -1,6 +1,6 @@
 import { Controller, Get, Param, Query, Request } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
-import { RequestWithUser } from 'src/auth/dto/requests.type';
+import { RequestWithUser } from 'src/shared/requests.type';
 import { ConversationParamsDto } from './dto/conversation-param.dto';
 import { GetAllMessagesDto } from './dto/get-all-messages.dto';
 import { MessageService } from './message.service';

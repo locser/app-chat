@@ -1,7 +1,7 @@
 import { Body, Controller, Get, Param, Post, Request } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { ChangePasswordDto } from './dto/change-password.dto';
-import { RequestWithUser } from './dto/requests.type';
+import { RequestWithUser } from '../shared/requests.type';
 import { LoginDto } from './dto/user-sign-in.dto';
 import { SignUpDto } from './dto/user-sign-up.dto';
 import { Public } from './roles.decorator';
