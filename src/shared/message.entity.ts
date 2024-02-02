@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import mongoose from 'mongoose';
+import mongoose, { Types } from 'mongoose';
 import { MESSAGE_STATUS, MESSAGE_TYPE } from 'src/enum/message.enum';
 import { BaseModel } from './base-model.entity';
 
@@ -71,5 +71,12 @@ export class Message extends BaseModel {
     default: MESSAGE_STATUS.ACTIVE,
   })
   status: MESSAGE_STATUS;
+
+  @Prop({
+    nullable: true,
+    default: [],
+    type: Types.Array,
+  })
+  user_tag: any;
 }
 export const MessageSchema = SchemaFactory.createForClass(Message);

@@ -1,6 +1,11 @@
 import { Request } from 'express';
-import { User } from 'src/shared';
 
+export interface UserResponse {
+  _id: string;
+  role: string;
+  full_name: string;
+  avatar: string;
+}
 export interface RequestWithUser extends Request {
-  user: User;
+  user: UserResponse;
 }

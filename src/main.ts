@@ -11,6 +11,8 @@ import { UserModule } from './user/user.module';
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
+  app.enableCors();
+
   const config = new DocumentBuilder()
     .setTitle('Service Message ' + process.env.CONFIG_PRODUCTION_MODE)
     .setDescription(`The Message Service V1 API description`)

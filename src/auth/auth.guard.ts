@@ -36,6 +36,7 @@ export class AuthGuard implements CanActivate {
     }
 
     let payload;
+
     try {
       payload = await this.jwtService.verifyAsync(token, {
         secret: process.env.JWT_SECRET,
@@ -43,7 +44,7 @@ export class AuthGuard implements CanActivate {
     } catch {
       throw new ExceptionResponse(
         HttpStatus.UNAUTHORIZED,
-        'Lêu lêu chưa có token',
+        'Xác thực user không thành công',
       );
     }
 

@@ -36,10 +36,10 @@ export class ConversationService {
   ) {}
 
   async createNewConversation(
-    user_id: Types.ObjectId,
+    user_id: string,
     createConversation: CreateConversationDto,
   ) {
-    const member_id: Types.ObjectId = createConversation.member_id;
+    const member_id: string = createConversation.member_id;
     if (user_id == member_id)
       throw new ExceptionResponse(
         HttpStatus.BAD_REQUEST,
@@ -98,7 +98,7 @@ export class ConversationService {
     return new BaseResponse(201, 'OK', { conversation_id: conversation.id });
   }
 
-  async detailConversation(user_id: Types.ObjectId, body: DetailConversation) {
+  async detailConversation(user_id: string, body: DetailConversation) {
     const detail: any = await this.conversationModel.findById(
       body.conversation_id,
     );
@@ -108,10 +108,11 @@ export class ConversationService {
       .find({ conversation_id: body.conversation_id })
       .populate('user_id', 'avatar full_name _id')
       .exec();
+
     if (detail.type == 2) {
-      const other = member.filter((item) => {
-        return item.user_id._id != user_id;
-      });
+      // const other = member.filter((item) => {
+      //   return item.user_id._id != user_id;
+      // });
       // detail.name = other[0].user_id.full_name;
       // detail.avatar = other[0].user_id.avatar;
     }
