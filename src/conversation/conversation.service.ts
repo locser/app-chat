@@ -18,9 +18,31 @@ import {
 import { BaseResponse } from 'src/shared/base-response.response';
 import { DetailConversation } from './dto/detail-conversation.dto';
 import { DetailConversationResponse } from './response/detail-conversation.response';
+import { QueryConversation } from './response/query-conversation.dto';
 
 @Injectable()
 export class ConversationService {
+  async getListConversation(user_id: string, query: QueryConversation) {
+    const { limit, position } = query;
+    try {
+      const conversations = await this.conversationModel
+        .find({
+          members: { $in: [user_id] },
+        })
+        .sort({ updated_at: 'desc' })
+        .limit(+limit);
+
+      console.log(
+        'ConversationService ~ getListConversation ~ conversations:',
+        conversations,
+      );
+
+      return new BaseResponse(200, 'OK', conversations);
+    } catch (error) {
+      console.log('ConversationService ~ getListConversation ~ error:', error);
+      return new BaseResponse(400, 'FAIL', error);
+    }
+  }
   constructor(
     @InjectModel(User.name)
     private readonly userModel: Model<User>,

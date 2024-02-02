@@ -104,6 +104,8 @@ export class Conversation extends BaseModel {
     default: CONVERSATION_STATUS.ACTIVE,
   })
   status: CONVERSATION_STATUS;
+
+  owner_id: string;
 }
 
 export const ConversationSchema = SchemaFactory.createForClass(Conversation);

@@ -11,6 +11,8 @@ import {
   ConversationMemberSchema,
   ConversationMemberWaitingConfirm,
   ConversationMemberWaitingConfirmSchema,
+  Message,
+  MessageSchema,
 } from 'src/shared';
 
 @Module({
@@ -36,6 +38,11 @@ import {
       {
         name: ConversationMemberWaitingConfirm.name,
         schema: ConversationMemberWaitingConfirmSchema,
+      },
+
+      {
+        name: Message.name,
+        schema: MessageSchema,
       },
     ]),
   ],

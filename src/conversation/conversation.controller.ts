@@ -13,6 +13,7 @@ import { ConversationService } from './conversation.service';
 import { CreateConversationDto } from './dto/create-conversation.dto';
 import { CreateConversationResponse } from './response/create-conversation-response';
 import { DetailConversation } from './dto/detail-conversation.dto';
+import { QueryConversation } from './response/query-conversation.dto';
 @ApiTags('Conversation')
 @Controller('conversation')
 export class ConversationController {
@@ -32,6 +33,18 @@ export class ConversationController {
     const data = await this.conversationService.createNewConversation(
       req.user._id,
       createConversation,
+    );
+    return data;
+  }
+
+  @Get('')
+  async getListConversation(
+    @Request() req: RequestWithUser,
+    @Query() query: QueryConversation,
+  ) {
+    const data = await this.conversationService.getListConversation(
+      req.user._id,
+      query,
     );
     return data;
   }
