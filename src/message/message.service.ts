@@ -22,6 +22,6 @@ export class MessageService {
     conversation_id: string,
     query: GetAllMessagesDto,
   ) {
-    return { user_id, conversation_id, query };
+    // const message = await this.messageModel.
   }
 }

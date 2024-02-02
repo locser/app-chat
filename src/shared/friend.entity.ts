@@ -17,11 +17,13 @@ import * as moment from 'moment';
 export class Friend extends BaseModel {
   @Prop({
     type: Types.ObjectId,
+    ref: 'User',
   })
   user_id: Types.ObjectId;
 
   @Prop({
     type: Types.ObjectId,
+    ref: 'User',
   })
   user_friend_id: Types.ObjectId;
 

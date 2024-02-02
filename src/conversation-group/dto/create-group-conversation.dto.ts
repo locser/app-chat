@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty } from 'class-validator';
+import { ArrayMinSize, IsNotEmpty } from 'class-validator';
 
 export class CreateGroupConversationDto {
   @IsNotEmpty()
@@ -9,7 +9,8 @@ export class CreateGroupConversationDto {
     description: 'id của user muốn tạo cuộc trò truyện',
     example: 'ssssssss',
   })
-  member_id: string[];
+  @ArrayMinSize(2, { message: 'Cuộc trò chuyện nhóm cần ít nhất 3 thành viên' })
+  member_ids: string[];
 
   @ApiProperty({
     type: String,

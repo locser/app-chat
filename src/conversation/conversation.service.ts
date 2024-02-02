@@ -18,6 +18,7 @@ import {
 import { BaseResponse } from 'src/shared/base-response.response';
 import { DetailConversation } from './dto/detail-conversation.dto';
 import { DetailConversationResponse } from './response/detail-conversation.response';
+import { QueryConversation } from './response/query-conversation.dto';
 
 @Injectable()
 export class ConversationService {
@@ -96,6 +97,31 @@ export class ConversationService {
     );
 
     return new BaseResponse(201, 'OK', { conversation_id: conversation.id });
+  }
+
+  async getListConversation(user_id: string, query_param: QueryConversation) {
+    const { limit, position } = query_param;
+    try {
+      const query = {
+        members: { $in: [user_id] },
+        last_message_id: { $ne: '' },
+        status: CONVERSATION_STATUS.ACTIVE,
+      };
+
+      if (position) {
+        query['updated_at'] = { $lt: position };
+      }
+
+      const conversations = await this.conversationModel
+        .find(query)
+        .sort({ updated_at: 'desc' })
+        .limit(+limit);
+
+      return new BaseResponse(200, 'OK', conversations);
+    } catch (error) {
+      console.log('ConversationService ~ getListConversation ~ error:', error);
+      return new BaseResponse(400, 'FAIL', error);
+    }
   }
 
   async detailConversation(user_id: string, body: DetailConversation) {
