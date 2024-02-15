@@ -1,14 +1,16 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsIn, IsNotEmpty, IsNumberString, IsOptional, ValidateIf } from 'class-validator';
+import {
+  IsIn,
+  IsNotEmpty,
+  IsNumber,
+  IsNumberString,
+  IsOptional,
+  ValidateIf,
+} from 'class-validator';
 
 export class GetAllMessagesDto {
   @IsOptional()
-  @IsNumberString(
-    {},
-    {
-      message: '$property phải là số nguyên',
-    },
-  )
+  @IsNumber()
   @ApiPropertyOptional({
     type: Number,
     description: 'Gioi han message text',
@@ -16,13 +18,14 @@ export class GetAllMessagesDto {
   })
   limit: number;
 
-  @ValidateIf(o => +o.arrow === 3)
+  @ValidateIf((o) => +o.arrow === 3)
   @IsNotEmpty({
     message: '$property không được để trống',
   })
   @ApiPropertyOptional({
     type: String,
-    description: 'Vi tri cua message theo truong position, neu lay tu dau khong can truyen',
+    description:
+      'Vi tri cua message theo truong position, neu lay tu dau khong can truyen',
     example: '123321',
   })
   position: string;

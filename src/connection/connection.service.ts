@@ -10,6 +10,7 @@ import {
   User,
 } from 'src/shared';
 import { MessageTextDto } from './dto/message-text.dto';
+import * as moment from 'moment';
 
 @Injectable()
 export class ConnectionService {
@@ -141,6 +142,8 @@ export class ConnectionService {
       message_reply_id: message_reply_id,
       user_target: [],
       user_tag: listUserTag,
+      created_at: +moment(),
+      updated_at: +moment(),
     });
 
     return newMessage;
