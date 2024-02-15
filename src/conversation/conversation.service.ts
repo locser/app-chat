@@ -128,7 +128,6 @@ export class ConversationService {
     const detail: any = await this.conversationModel.findById(
       body.conversation_id,
     );
-    console.log('ConversationService ~ detailConversation ~ detail:', detail);
 
     const member = await this.conversationMemberModel
       .find({ conversation_id: body.conversation_id })
