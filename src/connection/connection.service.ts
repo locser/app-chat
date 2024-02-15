@@ -43,6 +43,15 @@ export class ConnectionService {
       data,
     );
 
+    await this.conversationModel.updateOne(
+      {
+        _id: conversation._id,
+      },
+      {
+        last_message_id: newMessage._id.toString(),
+      },
+    );
+
     return { conversation: conversation, message: newMessage };
   }
 

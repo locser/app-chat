@@ -101,6 +101,7 @@ export class ConversationService {
 
   async getListConversation(user_id: string, query_param: QueryConversation) {
     const { limit, position } = query_param;
+
     try {
       const query = {
         members: { $in: [user_id] },
