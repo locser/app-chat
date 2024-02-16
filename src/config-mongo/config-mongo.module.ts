@@ -1,16 +1,22 @@
 import { Module } from '@nestjs/common';
-import { ConfigMongoService } from './config-mongo.service';
 import { ConfigModule as ConfigNest } from '@nestjs/config';
+import { ConfigMongoService } from './config-mongo.service';
 
 import { MongooseModule } from '@nestjs/mongoose';
 import {
   CategorySticker,
   CategoryStickerSchema,
   Conversation,
+  ConversationDisableNotify,
+  ConversationDisableNotifySchema,
+  ConversationHidden,
+  ConversationHiddenSchema,
   ConversationMember,
   ConversationMemberSchema,
   ConversationMemberWaitingConfirm,
   ConversationMemberWaitingConfirmSchema,
+  ConversationPinned,
+  ConversationPinnedSchema,
   ConversationSchema,
   Message,
   MessageSchema,
@@ -80,6 +86,20 @@ import {
       {
         name: Message.name,
         schema: MessageSchema,
+      },
+
+      {
+        name: ConversationHidden.name,
+        schema: ConversationHiddenSchema,
+      },
+
+      {
+        name: ConversationPinned.name,
+        schema: ConversationPinnedSchema,
+      },
+      {
+        name: ConversationDisableNotify.name,
+        schema: ConversationDisableNotifySchema,
       },
     ]),
   ],
