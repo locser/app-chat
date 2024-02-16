@@ -235,6 +235,42 @@ export class ConnectionGateway
     }
   }
 
+  @SubscribeMessage('message-image')
+  async handleMessageImage(
+    @ConnectedSocket() client: SocketWithUser,
+    @MessageBody() data: MessageTextDto,
+  ) {
+    try {
+      const hasAccess = await this.connectionService.beforeJoinRoom(
+        client.user._id,
+        data.conversation_id,
+      );
+
+      if (!hasAccess) {
+        throw new WsException('Bạn không có quyền truy cập!!');
+      }
+
+      const { message, conversation } =
+        await this.connectionService.handleMessage(client.user._id, data);
+
+      // const messageResponse = new MessageResponse();
+      this.emitSocketMessage(
+        client.user,
+        message,
+        conversation,
+        'message-image',
+      );
+    } catch (error) {
+      console.log('error:', error);
+      this.emitSocketError(
+        client.user._id.toString(),
+        'message-image',
+        'Bạn không có quyền truy cập cuộc trò chuyện này!!',
+        error,
+      );
+    }
+  }
+
   /** SUB FUNCTION */
 
   async emitSocketError(
