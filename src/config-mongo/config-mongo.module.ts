@@ -28,7 +28,7 @@ import {
 
 @Module({
   imports: [
-    ConfigNest.forRoot({}),
+    ConfigNest.forRoot({ isGlobal: true }),
 
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
