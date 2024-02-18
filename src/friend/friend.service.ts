@@ -15,15 +15,54 @@ export class FriendService {
   countFriendRequests(user_id: string) {
     throw new Error('Method not implemented.');
   }
-  removeRequestFriend(user_id: string, targetuser_id: string) {
-    throw new Error('Method not implemented.');
-  }
-  deniedFriendRequest(user_id: string, targetuser_id: string) {
-    throw new Error('Method not implemented.');
-  }
 
-  sendFriendRequestQRcode(user_id: string, targetuser_id: string) {
-    throw new Error('Method not implemented.');
+  async removeRequestFriend(user_id: string, target_user_id: string) {
+    const filter = {
+      status: USER_STATUS.ACTIVE,
+      _id: new Types.ObjectId(target_user_id),
+    };
+    const userExist = await this.validateUserOption(filter);
+
+    if (!userExist) {
+      throw new ExceptionResponse(404, 'Không tìm thấy user này');
+    }
+
+    const friend = await this.checkFriendType(user_id, target_user_id);
+
+    if (!(friend?.type == FRIEND_TYPE.WAITING_RESPONSE)) {
+      throw new ExceptionResponse(
+        404,
+        'bạn chưa gửi lời mời kết bạn tới người này',
+      );
+    }
+
+    await this.removeFriendUser(user_id, target_user_id);
+    await this.removeFriendUser(target_user_id, user_id);
+    return new BaseResponse(200, 'OK');
+  }
+  async deniedFriendRequest(user_id: string, target_user_id: string) {
+    const filter = {
+      status: USER_STATUS.ACTIVE,
+      _id: new Types.ObjectId(target_user_id),
+    };
+    const userExist = await this.validateUserOption(filter);
+
+    if (!userExist) {
+      throw new ExceptionResponse(404, 'Không tìm thấy user này');
+    }
+
+    const friend = await this.checkFriendType(user_id, target_user_id);
+
+    if (!(friend?.type == FRIEND_TYPE.WAITING_CONFIRM)) {
+      throw new ExceptionResponse(
+        404,
+        'Người này chưa gửi lời mời kết bạn tới bạn',
+      );
+    }
+
+    await this.removeFriendUser(user_id, target_user_id);
+    await this.removeFriendUser(target_user_id, user_id);
+    return new BaseResponse(200, 'OK');
   }
 
   constructor(
@@ -102,7 +141,6 @@ export class FriendService {
         type: 2, // chowf xac nhan
       },
     );
-    console.log('FriendService ~ sendFriendRequest ~  a:', a);
 
     return new BaseResponse(200, 'OK', null);
   }
@@ -211,7 +249,10 @@ export class FriendService {
         'Bạn không thể remove chính mình!',
       );
 
-    const targetUser = await this.userModel.exists({ _id: target_id });
+    const targetUser = await this.validateUserOption({
+      _id: new Types.ObjectId(target_id),
+      status: USER_STATUS.ACTIVE,
+    });
 
     if (!targetUser) {
       throw new ExceptionResponse(
@@ -293,5 +334,9 @@ export class FriendService {
     });
 
     return block1 && block2;
+  }
+
+  async validateUserOption(filter: object) {
+    return await this.userModel.findOne(filter);
   }
 }

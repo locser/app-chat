@@ -77,7 +77,7 @@ export class FriendController {
     return data;
   }
 
-  @Post(':id/denied')
+  @Post('denied')
   @ApiResponse({
     status: HttpStatus.OK,
     type: BaseResponse,
@@ -86,7 +86,7 @@ export class FriendController {
   @ApiOperation({ summary: 'Từ chối lời mời kết bạn' })
   async deniedFriend(
     @Request() req: RequestWithUser,
-    @Param() param: RequestFriendWithParamDto,
+    @Query() param: RequestFriendWithParamDto,
   ) {
     const data = await this.friendService.deniedFriendRequest(
       req.user._id,
@@ -95,7 +95,7 @@ export class FriendController {
     return data;
   }
 
-  @Post(':id/remove')
+  @Post('remove-request')
   @ApiResponse({
     status: HttpStatus.OK,
     type: BaseResponse,
@@ -104,7 +104,7 @@ export class FriendController {
   @ApiOperation({ summary: 'Xoá lời mời kết bạn' })
   async removeRequestFriend(
     @Request() req: RequestWithUser,
-    @Param() param: RequestFriendWithParamDto,
+    @Query() param: RequestFriendWithParamDto,
   ) {
     const data = await this.friendService.removeRequestFriend(
       req.user._id,
@@ -145,17 +145,17 @@ export class FriendController {
   //   return data;
   // }
 
-  // @Post(':id/remove')
-  // @ApiResponse({
-  //   type: BaseResponse,
-  //   description: 'Xoá bạn bè',
-  // })
-  // @ApiOperation({ summary: 'Xoá bạn bè' })
-  // async removeFriend(
-  //   @Request() req: RequestWithUser,
-  //   @Param() param: FriendWithParamDto,
-  // ) {
-  //   const data = await this.friendService.removeFriend(req.user._id, param.id);
-  //   return data;
-  // }
+  @Post('remove-friend')
+  @ApiResponse({
+    type: BaseResponse,
+    description: 'Xoá bạn bè',
+  })
+  @ApiOperation({ summary: 'Xoá bạn bè' })
+  async removeFriend(
+    @Request() req: RequestWithUser,
+    @Query() param: RequestFriendWithParamDto,
+  ) {
+    const data = await this.friendService.removeFriend(req.user._id, param._id);
+    return data;
+  }
 }

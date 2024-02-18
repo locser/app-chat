@@ -1,24 +1,29 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { CreateConversationDto } from './dto/create-conversation.dto';
+import {
+  CONVERSATION_MEMBER_PERMISSION,
+  CONVERSATION_STATUS,
+  CONVERSATION_TYPE,
+  USER_STATUS,
+} from 'src/enum';
 import {
   Conversation,
   ConversationMember,
   ConversationMemberWaitingConfirm,
   ExceptionResponse,
+  Message,
   User,
 } from 'src/shared';
-import { InjectModel } from '@nestjs/mongoose';
-import {
-  CONVERSATION_TYPE,
-  CONVERSATION_STATUS,
-  CONVERSATION_MEMBER_PERMISSION,
-  USER_STATUS,
-} from 'src/enum';
 import { BaseResponse } from 'src/shared/base-response.response';
+import { formatUnixTimestamp } from 'src/util/format-time';
+import { CreateConversationDto } from './dto/create-conversation.dto';
 import { DetailConversation } from './dto/detail-conversation.dto';
 import { DetailConversationResponse } from './response/detail-conversation.response';
 import { QueryConversation } from './response/query-conversation.dto';
+import { ConversationHidden } from 'src/shared/conversation-hidden.entity';
+import { ConversationPinned } from 'src/shared/conversation-pinned.entity';
+import { ConversationDisableNotify } from 'src/shared/conversation-disable-notify.entity';
 
 @Injectable()
 export class ConversationService {
@@ -34,6 +39,18 @@ export class ConversationService {
 
     @InjectModel(ConversationMemberWaitingConfirm.name)
     private readonly conversationMemberWaitingModel: Model<ConversationMemberWaitingConfirm>,
+
+    @InjectModel(ConversationHidden.name)
+    private readonly conversationHiddenModel: Model<ConversationHidden>,
+
+    @InjectModel(ConversationPinned.name)
+    private readonly conversationPinnedModel: Model<ConversationPinned>,
+
+    @InjectModel(ConversationDisableNotify.name)
+    private readonly conversationDisableNotifyModel: Model<ConversationDisableNotify>,
+
+    @InjectModel(Message.name)
+    private readonly messageModel: Model<Message>,
   ) {}
 
   async createNewConversation(
@@ -99,13 +116,52 @@ export class ConversationService {
     return new BaseResponse(201, 'OK', { conversation_id: conversation.id });
   }
 
+  async getListConversationHidden(
+    user_id: string,
+  ): Promise<ConversationHidden[]> {
+    return await this.conversationHiddenModel.find({
+      user_id: user_id,
+    });
+  }
+
+  async getListConversationPinned(
+    user_id: string,
+  ): Promise<ConversationPinned[]> {
+    return await this.conversationPinnedModel.find({
+      user_id: user_id,
+    });
+  }
+
+  async getListConversationDisableNotify(
+    user_id: string,
+  ): Promise<ConversationDisableNotify[]> {
+    return await this.conversationDisableNotifyModel.find({
+      user_id: user_id,
+    });
+  }
+
+  async getListLastMessageConversation(list_message_id): Promise<Message[]> {
+    return await this.messageModel.find({
+      _id: { $in: list_message_id },
+    });
+  }
+
   async getListConversation(user_id: string, query_param: QueryConversation) {
     const { limit, position } = query_param;
+
     try {
+      const listConversationHidden =
+        await this.getListConversationHidden(user_id);
+
+      const listConversationHiddenIds = listConversationHidden.map(
+        (item) => item._id,
+      );
+
       const query = {
         members: { $in: [user_id] },
         last_message_id: { $ne: '' },
         status: CONVERSATION_STATUS.ACTIVE,
+        _id: { $nin: listConversationHiddenIds },
       };
 
       if (position) {
@@ -113,11 +169,87 @@ export class ConversationService {
       }
 
       const conversations = await this.conversationModel
-        .find(query)
+        .find(query, {
+          __v: false,
+        })
         .sort({ updated_at: 'desc' })
-        .limit(+limit);
+        .limit(+limit)
+        .lean();
 
-      return new BaseResponse(200, 'OK', conversations);
+      if (conversations.length == 0) {
+        return new BaseResponse(200, 'OK', []);
+      }
+
+      const listUserIds = [];
+      const listMessageIds = [];
+      const listConversationIds = [];
+
+      conversations.map((item) => {
+        listUserIds.push(...item.members);
+        listMessageIds.push(new Types.ObjectId(item.last_message_id));
+        listConversationIds.push(item._id.toString());
+      });
+
+      // get member info
+
+      const listMember: { [user_id: string]: User } = await this.userModel
+        .find(
+          { _id: { $in: listUserIds } },
+          { _id: true, full_name: true, avatar: true, status: true },
+        )
+        .then((data) => {
+          return data.reduce((map, current) => {
+            map[current._id.toString()] = current;
+            return map;
+          }, {});
+        });
+
+      // get last message info
+
+      const listMessage = await this.getListLastMessageConversation(
+        listMessageIds,
+      ).then((data) => {
+        return data.reduce((map, current) => {
+          map[current._id.toString()] = current;
+          return map;
+        }, {});
+      });
+
+      // get setting, pinned, notify, hidden
+      // const listConversationPinned =
+      //   await this.getListConversationPinned(user_id);
+
+      const listConversationDisableNotify =
+        await this.getListConversationDisableNotify(user_id);
+
+      const data = conversations.map((item) => {
+        const id = item._id.toString();
+
+        if (item.type == CONVERSATION_TYPE.PERSONAL) {
+          const otherUserId = item.members.find((_id) => _id != user_id);
+
+          const otherUser = listMember[otherUserId];
+
+          item.avatar = otherUser.avatar;
+          item.name = otherUser.full_name;
+        }
+
+        return {
+          ...item,
+          _id: id,
+          is_notify: listConversationDisableNotify.find(
+            (temp) => temp.conversation_id == id,
+          )
+            ? 0
+            : 1,
+          created_at: formatUnixTimestamp(item.created_at),
+          updated_at: formatUnixTimestamp(item.updated_at),
+          last_activity: formatUnixTimestamp(item.last_activity),
+          last_message: { ...listMessage[item.last_message_id] },
+        };
+      });
+
+      return new BaseResponse(200, 'OK', data);
     } catch (error) {
       console.log('ConversationService ~ getListConversation ~ error:', error);
       return new BaseResponse(400, 'FAIL', error);

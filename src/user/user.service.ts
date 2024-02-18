@@ -1,10 +1,10 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
-import { RequestWithUser } from 'src/shared/requests.type';
+import { Model } from 'mongoose';
 import { ExceptionResponse, User } from 'src/shared';
-import { UserProfileResponse } from './response/user-profile.response';
 import { BaseResponse } from 'src/shared/base-response.response';
+import { RequestWithUser } from 'src/shared/requests.type';
+import { UserProfileResponse } from './response/user-profile.response';
 
 @Injectable()
 export class UserService {

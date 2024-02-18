@@ -9,10 +9,24 @@ import {
   ConversationMemberWaitingConfirm,
   ConversationMemberWaitingConfirmSchema,
   ConversationSchema,
+  Message,
+  MessageSchema,
   User,
   UserSchema,
 } from 'src/shared';
 import { ConfigModule } from 'src/config-mongo/config-mongo.module';
+import {
+  ConversationHidden,
+  ConversationHiddenSchema,
+} from 'src/shared/conversation-hidden.entity';
+import {
+  ConversationPinned,
+  ConversationPinnedSchema,
+} from 'src/shared/conversation-pinned.entity';
+import {
+  ConversationDisableNotify,
+  ConversationDisableNotifySchema,
+} from 'src/shared/conversation-disable-notify.entity';
 
 @Module({
   controllers: [ConversationController],
@@ -31,6 +45,20 @@ import { ConfigModule } from 'src/config-mongo/config-mongo.module';
       },
 
       {
+        name: ConversationHidden.name,
+        schema: ConversationHiddenSchema,
+      },
+
+      {
+        name: ConversationPinned.name,
+        schema: ConversationPinnedSchema,
+      },
+      {
+        name: ConversationDisableNotify.name,
+        schema: ConversationDisableNotifySchema,
+      },
+
+      {
         name: ConversationMember.name,
         schema: ConversationMemberSchema,
       },
@@ -38,6 +66,11 @@ import { ConfigModule } from 'src/config-mongo/config-mongo.module';
       {
         name: ConversationMemberWaitingConfirm.name,
         schema: ConversationMemberWaitingConfirmSchema,
+      },
+
+      {
+        name: Message.name,
+        schema: MessageSchema,
       },
     ]),
   ],

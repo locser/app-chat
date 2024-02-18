@@ -5,6 +5,11 @@ export * from './conversation.entity';
 export * from './user.entity';
 export * from './message.entity';
 export * from './sticker.entity';
+export * from './conversation-disable-notify.entity';
+export * from './conversation-hidden.entity';
+export * from './conversation-pinned.entity';
+export * from './';
+export * from './';
 
 //
 export * from './base-model.entity';
