@@ -1,6 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty } from 'class-validator';
-import { Types } from 'mongoose';
+import { IsArray, IsNotEmpty } from 'class-validator';
 // export class TagUserDto {
 //   @ApiProperty({
 //     type: String,
@@ -82,7 +81,7 @@ import { Types } from 'mongoose';
 //   url: string;
 // }
 
-export class MessageTextDto {
+export class MessageDto {
   @IsNotEmpty({
     message: '$property không được trống',
   })
@@ -106,6 +105,11 @@ export class MessageTextDto {
     required: true,
   })
   type: number;
+
+  @IsArray()
+  media: string[];
+
+  message_reply_id: string;
 
   @ApiProperty({
     type: Number,
@@ -139,7 +143,7 @@ export class MessageTextDto {
   // })
   // link: LinkDto[];
 
-  constructor(data: MessageTextDto) {
+  constructor(data: MessageDto) {
     this.message = data?.message || '';
     this.conversation_id = data?.conversation_id || '';
     // this.tag = data.tag;

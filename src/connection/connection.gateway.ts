@@ -13,14 +13,11 @@ import {
 import { Server, Socket } from 'socket.io';
 import { ConnectionService } from './connection.service';
 // import { ExceptionResponse } from 'src/shared';
-import {
-  Conversation,
-  Message,
-  SocketWithUser,
-  UserResponse,
-} from 'src/shared';
+import { Conversation, SocketWithUser, UserResponse } from 'src/shared';
+import { formatUnixTimestamp } from 'src/util/format-time';
 import { JoinRoomDto } from './dto/join-room.dto';
-import { MessageTextDto } from './dto/message-text.dto';
+import { MessageDto } from './dto/message-text.dto';
+import { UserMessageResponse } from './response/user-message.response';
 
 @WebSocketGateway({
   cors: {
@@ -202,7 +199,7 @@ export class ConnectionGateway
   @SubscribeMessage('message-text')
   async handleMessageText(
     @ConnectedSocket() client: SocketWithUser,
-    @MessageBody() data: MessageTextDto,
+    @MessageBody() data: MessageDto,
   ) {
     try {
       const hasAccess = await this.connectionService.beforeJoinRoom(
@@ -238,7 +235,7 @@ export class ConnectionGateway
   @SubscribeMessage('message-image')
   async handleMessageImage(
     @ConnectedSocket() client: SocketWithUser,
-    @MessageBody() data: MessageTextDto,
+    @MessageBody() data: MessageDto,
   ) {
     try {
       const hasAccess = await this.connectionService.beforeJoinRoom(
@@ -265,7 +262,151 @@ export class ConnectionGateway
       this.emitSocketError(
         client.user._id.toString(),
         'message-image',
-        'Bạn không có quyền truy cập cuộc trò chuyện này!!',
+        error?.message || '',
+        error,
+      );
+    }
+  }
+
+  @SubscribeMessage('message-audio')
+  async handleMessageAudio(
+    @ConnectedSocket() client: SocketWithUser,
+    @MessageBody() data: MessageDto,
+  ) {
+    try {
+      const hasAccess = await this.connectionService.beforeJoinRoom(
+        client.user._id,
+        data.conversation_id,
+      );
+
+      if (!hasAccess) {
+        throw new WsException('Bạn không có quyền truy cập!!');
+      }
+
+      const { message, conversation } =
+        await this.connectionService.handleMessage(client.user._id, data);
+
+      // const messageResponse = new MessageResponse();
+      this.emitSocketMessage(
+        client.user,
+        message,
+        conversation,
+        'message-audio',
+      );
+    } catch (error) {
+      console.log('error:', error);
+      this.emitSocketError(
+        client.user._id.toString(),
+        'message-image',
+        error?.message || '',
+        error,
+      );
+    }
+  }
+
+  @SubscribeMessage('message-video')
+  async handleMessageVideo(
+    @ConnectedSocket() client: SocketWithUser,
+    @MessageBody() data: MessageDto,
+  ) {
+    try {
+      const hasAccess = await this.connectionService.beforeJoinRoom(
+        client.user._id,
+        data.conversation_id,
+      );
+
+      if (!hasAccess) {
+        throw new WsException('Bạn không có quyền truy cập!!');
+      }
+
+      const { message, conversation } =
+        await this.connectionService.handleMessage(client.user._id, data);
+
+      // const messageResponse = new MessageResponse();
+      this.emitSocketMessage(
+        client.user,
+        message,
+        conversation,
+        'message-video',
+      );
+    } catch (error) {
+      console.log('error:', error);
+      this.emitSocketError(
+        client.user._id.toString(),
+        'message-video',
+        error?.message || '',
+        error,
+      );
+    }
+  }
+
+  @SubscribeMessage('message-file')
+  async handleMessageFile(
+    @ConnectedSocket() client: SocketWithUser,
+    @MessageBody() data: MessageDto,
+  ) {
+    try {
+      const hasAccess = await this.connectionService.beforeJoinRoom(
+        client.user._id,
+        data.conversation_id,
+      );
+
+      if (!hasAccess) {
+        throw new WsException('Bạn không có quyền truy cập!!');
+      }
+
+      const { message, conversation } =
+        await this.connectionService.handleMessage(client.user._id, data);
+
+      // const messageResponse = new MessageResponse();
+      this.emitSocketMessage(
+        client.user,
+        message,
+        conversation,
+        'message-file',
+      );
+    } catch (error) {
+      console.log('error:', error);
+      this.emitSocketError(
+        client.user._id.toString(),
+        'message-file',
+        error?.message || '',
+        error,
+      );
+    }
+  }
+
+  @SubscribeMessage('message-reply')
+  async handleMessageReply(
+    @ConnectedSocket() client: SocketWithUser,
+    @MessageBody() data: MessageDto,
+  ) {
+    try {
+      const hasAccess = await this.connectionService.beforeJoinRoom(
+        client.user._id,
+        data.conversation_id,
+      );
+
+      if (!hasAccess) {
+        throw new WsException('Bạn không có quyền truy cập!!');
+      }
+
+      const { message, conversation } =
+        await this.connectionService.handleMessage(client.user._id, data);
+
+      // const messageResponse = new MessageResponse();
+      this.emitSocketMessage(
+        client.user,
+        message,
+        conversation,
+        'message-reply',
+      );
+    } catch (error) {
+      console.log('error:', error);
+      this.emitSocketError(
+        client.user._id.toString(),
+        'message-reply',
+        error?.message || '',
         error,
       );
     }
@@ -287,14 +428,17 @@ export class ConnectionGateway
   }
   async emitSocketMessage(
     user: UserResponse,
-    new_message: Message,
+    new_message: any,
     conversation: Conversation,
     emit_socket: string,
   ) {
     const to = conversation.members.map(String);
 
+    new_message.updated_at = formatUnixTimestamp(new_message.updated_at);
+    new_message.created_at = formatUnixTimestamp(new_message.created_at);
+
     this.server.to(to).emit(emit_socket, {
-      user: user,
+      user: new UserMessageResponse(user),
       conversation: conversation,
       message: new_message,
     });

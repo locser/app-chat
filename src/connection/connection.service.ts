@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { CONVERSATION_STATUS, MESSAGE_TYPE } from 'src/enum';
+import { CONVERSATION_STATUS, MESSAGE_STATUS, MESSAGE_TYPE } from 'src/enum';
 import {
   Conversation,
   ConversationMember,
@@ -9,18 +9,18 @@ import {
   Message,
   User,
 } from 'src/shared';
-import { MessageTextDto } from './dto/message-text.dto';
+import { MessageDto } from './dto/message-text.dto';
 import * as moment from 'moment';
 
 @Injectable()
 export class ConnectionService {
-  async handleMessage(user_id: string, data: MessageTextDto) {
+  async handleMessage(user_id: string, data: MessageDto) {
     const { type, conversation_id } = data;
 
     if (!type)
       throw new ExceptionResponse(
         400,
-        'Không thể gửi tin nhắn mà không có cuộc trò chuyện',
+        'Không thể gửi tin nhắn mà không có type tin nhắn',
       );
 
     /** Kiểm tra conversation */
@@ -37,11 +37,7 @@ export class ConnectionService {
       );
 
     /** Kiểm tra message */
-    const newMessage = await this.validateMessage(
-      user_id,
-      MESSAGE_TYPE.TEXT,
-      data,
-    );
+    const newMessage = await this.validateMessage(user_id, type, data);
 
     await this.conversationModel.updateOne(
       {
@@ -97,11 +93,7 @@ export class ConnectionService {
   }
 
   /** SUB FUNCTION */
-  private async validateMessage(
-    user_id: string,
-    type: MESSAGE_TYPE,
-    data?: any,
-  ) {
+  private async validateMessage(user_id: string, type, data?: any) {
     let newMessage;
 
     switch (type) {
@@ -109,7 +101,208 @@ export class ConnectionService {
         newMessage = await this.validateTextMessage(user_id, data);
         break;
       }
+
+      case MESSAGE_TYPE.IMAGE: {
+        newMessage = await this.validateImageMessage(user_id, data);
+        break;
+      }
+
+      case MESSAGE_TYPE.VIDEO: {
+        newMessage = await this.validateVideoMessage(user_id, data);
+        break;
+      }
+
+      case MESSAGE_TYPE.AUDIO: {
+        newMessage = await this.validateAudioMessage(user_id, data);
+        break;
+      }
+
+      case MESSAGE_TYPE.FILE: {
+        newMessage = await this.validateFileMessage(user_id, data);
+        break;
+      }
+
+      case MESSAGE_TYPE.STICKER: {
+        newMessage = await this.validateStickerMessage(user_id, data);
+        break;
+      }
+
+      case MESSAGE_TYPE.REPLY: {
+        newMessage = await this.validateReplyMessage(user_id, data);
+        break;
+      }
+
+      default: {
+        throw new ExceptionResponse(400, 'Type message không hợp lệ!');
+      }
     }
+
+    return newMessage.toObject();
+  }
+
+  async validateReplyMessage(user_id: string, data: any) {
+    const { conversation_id, message, message_reply_id } = data;
+
+    const isValid = Types.ObjectId.isValid(message_reply_id);
+    if (!conversation_id || !message_reply_id || !isValid) {
+      throw new ExceptionResponse(
+        400,
+        'message image không hợp lệ, không để trống conversation_id hoặc media rỗng',
+      );
+    }
+
+    const messageReply = await this.checkValidMessage(
+      new Types.ObjectId(message_reply_id),
+      conversation_id,
+    );
+
+    if ((messageReply?.status ?? 0) !== MESSAGE_STATUS.ACTIVE) {
+      throw new ExceptionResponse(400, 'không thể reply tin nhắn đã thu hồi!');
+    }
+
+    // tạo message:::
+    const newMessage = await this.messageModel.create({
+      type: MESSAGE_TYPE.STICKER,
+      user_id: user_id,
+      message: message,
+      conversation_id: conversation_id,
+      message_reply_id: message_reply_id,
+      user_target: [],
+      user_tag: [],
+      created_at: +moment(),
+      updated_at: +moment(),
+    });
+
+    return newMessage;
+  }
+
+  async validateStickerMessage(user_id: string, data: any) {
+    const { conversation_id, message, media } = data;
+
+    if (!conversation_id || !media?.length) {
+      throw new ExceptionResponse(
+        400,
+        'message image không hợp lệ, không để trống conversation_id hoặc media rỗng',
+      );
+    }
+
+    // tạo message:::
+    const newMessage = await this.messageModel.create({
+      type: MESSAGE_TYPE.STICKER,
+      user_id: user_id,
+      message: message,
+      conversation_id: conversation_id,
+      user_target: [],
+      media: media,
+      user_tag: [],
+      created_at: +moment(),
+      updated_at: +moment(),
+    });
+
+    return newMessage;
+  }
+
+  async validateFileMessage(user_id: string, data: any) {
+    const { conversation_id, message, media } = data;
+
+    if (!conversation_id || !media?.length) {
+      throw new ExceptionResponse(
+        400,
+        'message image không hợp lệ, không để trống conversation_id hoặc media rỗng',
+      );
+    }
+
+    // tạo message:::
+    const newMessage = await this.messageModel.create({
+      type: MESSAGE_TYPE.FILE,
+      user_id: user_id,
+      message: message,
+      conversation_id: conversation_id,
+      user_target: [],
+      media: media,
+      user_tag: [],
+      created_at: +moment(),
+      updated_at: +moment(),
+    });
+
+    return newMessage;
+  }
+
+  async validateAudioMessage(user_id: string, data: any) {
+    const { conversation_id, message, media } = data;
+
+    if (!conversation_id || !media?.length) {
+      throw new ExceptionResponse(
+        400,
+        'message image không hợp lệ, không để trống conversation_id hoặc media rỗng',
+      );
+    }
+
+    // tạo message:::
+    const newMessage = await this.messageModel.create({
+      type: MESSAGE_TYPE.AUDIO,
+      user_id: user_id,
+      message: message,
+      conversation_id: conversation_id,
+      user_target: [],
+      media: media,
+      user_tag: [],
+      created_at: +moment(),
+      updated_at: +moment(),
+    });
+
+    return newMessage;
+  }
+
+  async validateVideoMessage(user_id: string, data: any) {
+    const { conversation_id, message, media } = data;
+
+    if (!conversation_id || !media?.length) {
+      throw new ExceptionResponse(
+        400,
+        'message image không hợp lệ, không để trống conversation_id hoặc media rỗng',
+      );
+    }
+
+    // tạo message:::
+    const newMessage = await this.messageModel.create({
+      type: MESSAGE_TYPE.VIDEO,
+      user_id: user_id,
+      message: message,
+      conversation_id: conversation_id,
+      user_target: [],
+      media: media,
+      user_tag: [],
+      created_at: +moment(),
+      updated_at: +moment(),
+    });
+
+    return newMessage;
+  }
+
+  async validateImageMessage(user_id: string, data: any) {
+    const { conversation_id, message, media } = data;
+
+    if (!conversation_id || !media?.length) {
+      throw new ExceptionResponse(
+        400,
+        'message image không hợp lệ, không để trống conversation_id hoặc media rỗng',
+      );
+    }
+    console.log('ConnectionService ~ validateImageMessage ~ media:', media);
+
+    // tạo message:::
+    const newMessage = await this.messageModel.create({
+      type: MESSAGE_TYPE.IMAGE,
+      user_id: user_id,
+      message: message,
+      conversation_id: conversation_id,
+      user_target: [],
+      media: media,
+      user_tag: [],
+      created_at: +moment(),
+      updated_at: +moment(),
+    });
 
     return newMessage;
   }
