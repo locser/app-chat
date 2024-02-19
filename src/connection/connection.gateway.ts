@@ -196,8 +196,8 @@ export class ConnectionGateway
     }
   }
 
-  @SubscribeMessage('message-text')
-  async handleMessageText(
+  @SubscribeMessage('message')
+  async handleMessage(
     @ConnectedSocket() client: SocketWithUser,
     @MessageBody() data: MessageDto,
   ) {
@@ -215,202 +215,233 @@ export class ConnectionGateway
         await this.connectionService.handleMessage(client.user._id, data);
 
       // const messageResponse = new MessageResponse();
-      this.emitSocketMessage(
-        client.user,
-        message,
-        conversation,
-        'message-text',
-      );
+      this.emitSocketMessage(client.user, message, conversation, 'message');
     } catch (error) {
       console.log('error:', error);
       this.emitSocketError(
         client.user._id.toString(),
-        'message-text',
-        'Bạn không có quyền truy cập cuộc trò chuyện này!!',
-        error,
-      );
-    }
-  }
-
-  @SubscribeMessage('message-image')
-  async handleMessageImage(
-    @ConnectedSocket() client: SocketWithUser,
-    @MessageBody() data: MessageDto,
-  ) {
-    try {
-      const hasAccess = await this.connectionService.beforeJoinRoom(
-        client.user._id,
-        data.conversation_id,
-      );
-
-      if (!hasAccess) {
-        throw new WsException('Bạn không có quyền truy cập!!');
-      }
-
-      const { message, conversation } =
-        await this.connectionService.handleMessage(client.user._id, data);
-
-      // const messageResponse = new MessageResponse();
-      this.emitSocketMessage(
-        client.user,
-        message,
-        conversation,
-        'message-image',
-      );
-    } catch (error) {
-      console.log('error:', error);
-      this.emitSocketError(
-        client.user._id.toString(),
-        'message-image',
+        'message',
         error?.message || '',
         error,
       );
     }
   }
 
-  @SubscribeMessage('message-audio')
-  async handleMessageAudio(
-    @ConnectedSocket() client: SocketWithUser,
-    @MessageBody() data: MessageDto,
-  ) {
-    try {
-      const hasAccess = await this.connectionService.beforeJoinRoom(
-        client.user._id,
-        data.conversation_id,
-      );
+  // @SubscribeMessage('message-text')
+  // async handleMessageText(
+  //   @ConnectedSocket() client: SocketWithUser,
+  //   @MessageBody() data: MessageDto,
+  // ) {
+  //   try {
+  //     const hasAccess = await this.connectionService.beforeJoinRoom(
+  //       client.user._id,
+  //       data.conversation_id,
+  //     );
 
-      if (!hasAccess) {
-        throw new WsException('Bạn không có quyền truy cập!!');
-      }
+  //     if (!hasAccess) {
+  //       throw new WsException('Bạn không có quyền truy cập!!');
+  //     }
 
-      const { message, conversation } =
-        await this.connectionService.handleMessage(client.user._id, data);
+  //     const { message, conversation } =
+  //       await this.connectionService.handleMessage(client.user._id, data);
 
-      // const messageResponse = new MessageResponse();
-      this.emitSocketMessage(
-        client.user,
-        message,
-        conversation,
-        'message-audio',
-      );
-    } catch (error) {
-      console.log('error:', error);
-      this.emitSocketError(
-        client.user._id.toString(),
-        'message-image',
-        error?.message || '',
-        error,
-      );
-    }
-  }
+  //     // const messageResponse = new MessageResponse();
+  //     this.emitSocketMessage(
+  //       client.user,
+  //       message,
+  //       conversation,
+  //       'message-text',
+  //     );
+  //   } catch (error) {
+  //     console.log('error:', error);
+  //     this.emitSocketError(
+  //       client.user._id.toString(),
+  //       'message-text',
+  //       'Bạn không có quyền truy cập cuộc trò chuyện này!!',
+  //       error,
+  //     );
+  //   }
+  // }
 
-  @SubscribeMessage('message-video')
-  async handleMessageVideo(
-    @ConnectedSocket() client: SocketWithUser,
-    @MessageBody() data: MessageDto,
-  ) {
-    try {
-      const hasAccess = await this.connectionService.beforeJoinRoom(
-        client.user._id,
-        data.conversation_id,
-      );
+  // @SubscribeMessage('message-image')
+  // async handleMessageImage(
+  //   @ConnectedSocket() client: SocketWithUser,
+  //   @MessageBody() data: MessageDto,
+  // ) {
+  //   try {
+  //     const hasAccess = await this.connectionService.beforeJoinRoom(
+  //       client.user._id,
+  //       data.conversation_id,
+  //     );
 
-      if (!hasAccess) {
-        throw new WsException('Bạn không có quyền truy cập!!');
-      }
+  //     if (!hasAccess) {
+  //       throw new WsException('Bạn không có quyền truy cập!!');
+  //     }
 
-      const { message, conversation } =
-        await this.connectionService.handleMessage(client.user._id, data);
+  //     const { message, conversation } =
+  //       await this.connectionService.handleMessage(client.user._id, data);
 
-      // const messageResponse = new MessageResponse();
-      this.emitSocketMessage(
-        client.user,
-        message,
-        conversation,
-        'message-video',
-      );
-    } catch (error) {
-      console.log('error:', error);
-      this.emitSocketError(
-        client.user._id.toString(),
-        'message-video',
-        error?.message || '',
-        error,
-      );
-    }
-  }
+  //     // const messageResponse = new MessageResponse();
+  //     this.emitSocketMessage(
+  //       client.user,
+  //       message,
+  //       conversation,
+  //       'message-image',
+  //     );
+  //   } catch (error) {
+  //     console.log('error:', error);
+  //     this.emitSocketError(
+  //       client.user._id.toString(),
+  //       'message-image',
+  //       error?.message || '',
+  //       error,
+  //     );
+  //   }
+  // }
 
-  @SubscribeMessage('message-file')
-  async handleMessageFile(
-    @ConnectedSocket() client: SocketWithUser,
-    @MessageBody() data: MessageDto,
-  ) {
-    try {
-      const hasAccess = await this.connectionService.beforeJoinRoom(
-        client.user._id,
-        data.conversation_id,
-      );
+  // @SubscribeMessage('message-audio')
+  // async handleMessageAudio(
+  //   @ConnectedSocket() client: SocketWithUser,
+  //   @MessageBody() data: MessageDto,
+  // ) {
+  //   try {
+  //     const hasAccess = await this.connectionService.beforeJoinRoom(
+  //       client.user._id,
+  //       data.conversation_id,
+  //     );
 
-      if (!hasAccess) {
-        throw new WsException('Bạn không có quyền truy cập!!');
-      }
+  //     if (!hasAccess) {
+  //       throw new WsException('Bạn không có quyền truy cập!!');
+  //     }
 
-      const { message, conversation } =
-        await this.connectionService.handleMessage(client.user._id, data);
+  //     const { message, conversation } =
+  //       await this.connectionService.handleMessage(client.user._id, data);
 
-      // const messageResponse = new MessageResponse();
-      this.emitSocketMessage(
-        client.user,
-        message,
-        conversation,
-        'message-file',
-      );
-    } catch (error) {
-      console.log('error:', error);
-      this.emitSocketError(
-        client.user._id.toString(),
-        'message-file',
-        error?.message || '',
-        error,
-      );
-    }
-  }
+  //     // const messageResponse = new MessageResponse();
+  //     this.emitSocketMessage(
+  //       client.user,
+  //       message,
+  //       conversation,
+  //       'message-audio',
+  //     );
+  //   } catch (error) {
+  //     console.log('error:', error);
+  //     this.emitSocketError(
+  //       client.user._id.toString(),
+  //       'message-image',
+  //       error?.message || '',
+  //       error,
+  //     );
+  //   }
+  // }
 
-  @SubscribeMessage('message-reply')
-  async handleMessageReply(
-    @ConnectedSocket() client: SocketWithUser,
-    @MessageBody() data: MessageDto,
-  ) {
-    try {
-      const hasAccess = await this.connectionService.beforeJoinRoom(
-        client.user._id,
-        data.conversation_id,
-      );
+  // @SubscribeMessage('message-video')
+  // async handleMessageVideo(
+  //   @ConnectedSocket() client: SocketWithUser,
+  //   @MessageBody() data: MessageDto,
+  // ) {
+  //   try {
+  //     const hasAccess = await this.connectionService.beforeJoinRoom(
+  //       client.user._id,
+  //       data.conversation_id,
+  //     );
 
-      if (!hasAccess) {
-        throw new WsException('Bạn không có quyền truy cập!!');
-      }
+  //     if (!hasAccess) {
+  //       throw new WsException('Bạn không có quyền truy cập!!');
+  //     }
 
-      const { message, conversation } =
-        await this.connectionService.handleMessage(client.user._id, data);
+  //     const { message, conversation } =
+  //       await this.connectionService.handleMessage(client.user._id, data);
 
-      // const messageResponse = new MessageResponse();
-      this.emitSocketMessage(
-        client.user,
-        message,
-        conversation,
-        'message-reply',
-      );
-    } catch (error) {
-      console.log('error:', error);
-      this.emitSocketError(
-        client.user._id.toString(),
-        'message-reply',
-        error?.message || '',
-        error,
-      );
-    }
-  }
+  //     // const messageResponse = new MessageResponse();
+  //     this.emitSocketMessage(
+  //       client.user,
+  //       message,
+  //       conversation,
+  //       'message-video',
+  //     );
+  //   } catch (error) {
+  //     console.log('error:', error);
+  //     this.emitSocketError(
+  //       client.user._id.toString(),
+  //       'message-video',
+  //       error?.message || '',
+  //       error,
+  //     );
+  //   }
+  // }
+
+  // @SubscribeMessage('message-file')
+  // async handleMessageFile(
+  //   @ConnectedSocket() client: SocketWithUser,
+  //   @MessageBody() data: MessageDto,
+  // ) {
+  //   try {
+  //     const hasAccess = await this.connectionService.beforeJoinRoom(
+  //       client.user._id,
+  //       data.conversation_id,
+  //     );
+
+  //     if (!hasAccess) {
+  //       throw new WsException('Bạn không có quyền truy cập!!');
+  //     }
+
+  //     const { message, conversation } =
+  //       await this.connectionService.handleMessage(client.user._id, data);
+
+  //     // const messageResponse = new MessageResponse();
+  //     this.emitSocketMessage(
+  //       client.user,
+  //       message,
+  //       conversation,
+  //       'message-file',
+  //     );
+  //   } catch (error) {
+  //     console.log('error:', error);
+  //     this.emitSocketError(
+  //       client.user._id.toString(),
+  //       'message-file',
+  //       error?.message || '',
+  //       error,
+  //     );
+  //   }
+  // }
+
+  // @SubscribeMessage('message-reply')
+  // async handleMessageReply(
+  //   @ConnectedSocket() client: SocketWithUser,
+  //   @MessageBody() data: MessageDto,
+  // ) {
+  //   try {
+  //     const hasAccess = await this.connectionService.beforeJoinRoom(
+  //       client.user._id,
+  //       data.conversation_id,
+  //     );
+
+  //     if (!hasAccess) {
+  //       throw new WsException('Bạn không có quyền truy cập!!');
+  //     }
+
+  //     const { message, conversation } =
+  //       await this.connectionService.handleMessage(client.user._id, data);
+
+  //     // const messageResponse = new MessageResponse();
+  //     this.emitSocketMessage(
+  //       client.user,
+  //       message,
+  //       conversation,
+  //       'message-reply',
+  //     );
+  //   } catch (error) {
+  //     console.log('error:', error);
+  //     this.emitSocketError(
+  //       client.user._id.toString(),
+  //       'message-reply',
+  //       error?.message || '',
+  //       error,
+  //     );
+  //   }
+  // }
 
   /** SUB FUNCTION */
 
