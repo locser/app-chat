@@ -130,4 +130,73 @@ export class ConversationController {
     );
     return data;
   }
+
+  // @Post('join-link')
+  // @ApiOperation({ summary: 'Bật tắt tham gia bằng link' })
+  // @ApiResponse({
+  //   status: HttpStatus.OK,
+  //   description: 'Bật tắt tham gia bằng link',
+  // })
+  // async isJoinWithLink(
+  //   @Request() req: RequestWithUser,
+  //   @Query() param: DetailConversation,
+  // ) {
+  //   const data = await this.conversationService.isJoinWithLink(
+  //     param.conversation_id,
+  //     req.user._id,
+  //   );
+  //   return data;
+  // }
+
+  // @Post('update-name')
+  // @ApiOperation({ summary: 'Tham gia bằng link' })
+  // @ApiResponse({
+  //   status: HttpStatus.OK,
+  //   type: JoinWithLinkResponseSwagger,
+  //   description: 'Tham gia bằng link',
+  // })
+  // async joinWithLink(
+  //   @Request() req: RequestWithUser,
+  //   @Query() param: QueryJoinWithLinkConversationDto,
+  // ) {
+  //   const data: any = await this.conversationService.joinWithLink(
+  //     param.link,
+  //     req.user._id,
+  //   );
+  //   return data;
+  // }
+
+  // @Post('update-background')
+  // @ApiOperation({ summary: 'Tham gia bằng link' })
+  // @ApiResponse({
+  //   status: HttpStatus.OK,
+  //   description: 'Tham gia bằng link',
+  // })
+  // async joinWithLink(
+  //   @Request() req: RequestWithUser,
+  //   @Query() param: QueryJoinWithLinkConversationDto,
+  // ) {
+  //   const data: any = await this.conversationService.joinWithLink(
+  //     param.link,
+  //     req.user._id,
+  //   );
+  //   return data;
+  // }
+
+  // @Post('join-link/:link')
+  // @ApiOperation({ summary: 'Tham gia bằng link' })
+  // @ApiResponse({
+  //   status: HttpStatus.OK,
+  //   description: 'Tham gia bằng link',
+  // })
+  // async joinWithLink(
+  //   @Request() req: RequestWithUser,
+  //   @Query() param: QueryJoinWithLinkConversationDto,
+  // ) {
+  //   const data: any = await this.conversationService.joinWithLink(
+  //     param.link,
+  //     user.user_id,
+  //   );
+  //   return data;
+  // }
 }

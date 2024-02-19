@@ -74,7 +74,7 @@ export class Conversation extends BaseModel {
 
   @Prop({
     type: 'number',
-    default: BOOLEAN.TRUE,
+    default: BOOLEAN.FALSE,
   })
   is_join_with_link: BOOLEAN;
 
