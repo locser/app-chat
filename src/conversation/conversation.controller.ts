@@ -11,8 +11,8 @@ import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { RequestWithUser } from 'src/shared/requests.type';
 import { ConversationService } from './conversation.service';
 import { CreateConversationDto } from './dto/create-conversation.dto';
-import { CreateConversationResponse } from './response/create-conversation-response';
 import { DetailConversation } from './dto/detail-conversation.dto';
+import { CreateConversationResponse } from './response/create-conversation-response';
 import { QueryConversation } from './response/query-conversation.dto';
 @ApiTags('Conversation')
 @Controller('conversation')
@@ -58,6 +58,75 @@ export class ConversationController {
     const data = await this.conversationService.detailConversation(
       req.user._id,
       detailConversation,
+    );
+    return data;
+  }
+
+  @Post('pinned')
+  @ApiOperation({ summary: 'Ghim cuộc trò chuyện' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Ghim cuộc trò chuyện',
+  })
+  async pinConversation(
+    @Request() req: RequestWithUser,
+    @Query() query: DetailConversation,
+  ) {
+    const data = await this.conversationService.pinConversation(
+      req.user._id,
+      query.conversation_id,
+    );
+    return data;
+  }
+
+  @Post('hidden')
+  @ApiOperation({ summary: 'Ẩn cuộc trò chuyện' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Ẩn cuộc trò chuyện',
+  })
+  async hiddenConversation(
+    @Request() req: RequestWithUser,
+    @Query() param: DetailConversation,
+  ) {
+    const data = await this.conversationService.hiddenConversation(
+      param.conversation_id,
+      req.user._id,
+    );
+    return data;
+  }
+
+  @Post('delete')
+  @ApiOperation({ summary: 'Xoá cuộc trò chuyện' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Xoá cuộc trò chuyện',
+  })
+  async deleteConversation(
+    @Query() param: DetailConversation,
+
+    @Request() req: RequestWithUser,
+  ) {
+    const data = await this.conversationService.deleteConversation(
+      param.conversation_id,
+      req.user._id,
+    );
+    return data;
+  }
+
+  @Post('notify')
+  @ApiOperation({ summary: 'Tắt bật thông báo cuộc trò chuyện' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Tắt bật thông báo cuộc trò chuyện',
+  })
+  async notifyConversation(
+    @Request() req: RequestWithUser,
+    @Query() param: DetailConversation,
+  ) {
+    const data = await this.conversationService.disableNotify(
+      param.conversation_id,
+      req.user._id,
     );
     return data;
   }

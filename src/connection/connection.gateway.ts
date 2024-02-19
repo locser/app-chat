@@ -14,7 +14,7 @@ import { Server, Socket } from 'socket.io';
 import { ConnectionService } from './connection.service';
 // import { ExceptionResponse } from 'src/shared';
 import { Conversation, SocketWithUser, UserResponse } from 'src/shared';
-import { formatUnixTimestamp } from 'src/util/format-time';
+import { formatUnixTimestamp } from 'src/util';
 import { JoinRoomDto } from './dto/join-room.dto';
 import { MessageDto } from './dto/message-text.dto';
 import { UserMessageResponse } from './response/user-message.response';
