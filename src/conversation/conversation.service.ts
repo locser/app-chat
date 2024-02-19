@@ -1,5 +1,6 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
+import * as moment from 'moment';
 import { Model, Types } from 'mongoose';
 import {
   CONVERSATION_MEMBER_PERMISSION,
@@ -9,24 +10,34 @@ import {
 } from 'src/enum';
 import {
   Conversation,
+  ConversationHidden,
   ConversationMember,
   ConversationMemberWaitingConfirm,
+  ConversationPinned,
   ExceptionResponse,
   Message,
   User,
 } from 'src/shared';
 import { BaseResponse } from 'src/shared/base-response.response';
-import { formatUnixTimestamp } from 'src/util/format-time';
+import { ConversationDisableNotify } from 'src/shared/conversation-disable-notify.entity';
+import { checkMongoId, formatUnixTimestamp } from 'src/util';
 import { CreateConversationDto } from './dto/create-conversation.dto';
 import { DetailConversation } from './dto/detail-conversation.dto';
 import { DetailConversationResponse } from './response/detail-conversation.response';
 import { QueryConversation } from './response/query-conversation.dto';
-import { ConversationHidden } from 'src/shared/conversation-hidden.entity';
-import { ConversationPinned } from 'src/shared/conversation-pinned.entity';
-import { ConversationDisableNotify } from 'src/shared/conversation-disable-notify.entity';
 
 @Injectable()
 export class ConversationService {
+  private async getOneConversation(conversation_id: string) {
+    if (!checkMongoId(conversation_id)) {
+      throw new ExceptionResponse(400, 'Conversation_id không hợp lệ');
+    }
+
+    return await this.conversationModel.findById({
+      _id: new Types.ObjectId(conversation_id),
+    });
+  }
+
   constructor(
     @InjectModel(User.name)
     private readonly userModel: Model<User>,
@@ -209,8 +220,13 @@ export class ConversationService {
       const listMessage = await this.getListLastMessageConversation(
         listMessageIds,
       ).then((data) => {
-        return data.reduce((map, current) => {
-          map[current._id.toString()] = current;
+        return data.reduce((map, current: any) => {
+          const message: any = current.toObject();
+          map[current._id.toString()] = {
+            ...message,
+            updated_at: formatUnixTimestamp(message.updated_at),
+            created_at: formatUnixTimestamp(message.created_at),
+          };
           return map;
         }, {});
       });
@@ -281,5 +297,135 @@ export class ConversationService {
     };
 
     return new DetailConversationResponse(result);
+  }
+
+  async hiddenConversation(conversation_id: string, user_id: string) {
+    try {
+      const conversation = await this.getOneConversation(conversation_id);
+
+      if (!conversation?.members?.includes(user_id)) {
+        throw new ExceptionResponse(400, 'Không tìm thấy cuộc trò chuyện');
+      }
+
+      const hasConversationHidden = await this.conversationHiddenModel.exists({
+        user_id: user_id,
+        conversation_id: conversation_id,
+      });
+
+      if (hasConversationHidden) {
+        await this.conversationHiddenModel.deleteOne({
+          user_id: user_id,
+          conversation_id: conversation_id,
+        });
+      } else {
+        await this.conversationHiddenModel.create({
+          user_id: user_id,
+          conversation_id: conversation_id,
+          updated_at: +moment(),
+          created_at: +moment(),
+        });
+      }
+
+      return new BaseResponse(200, 'OK');
+    } catch (error) {
+      console.log('ConversationService ~ hiddenConversation ~ error:', error);
+      throw new ExceptionResponse(400, 'FAILED', error);
+    }
+  }
+
+  async deleteConversation(conversation_id: string, user_id: string) {
+    try {
+      const conversation = await this.getOneConversation(conversation_id);
+
+      if (!conversation?.members?.includes(user_id)) {
+        throw new ExceptionResponse(400, 'Không tìm thấy cuộc trò chuyện');
+      }
+
+      await this.conversationMemberModel.updateOne(
+        {
+          user_id: user_id,
+          conversation_id: conversation_id,
+        },
+        {
+          message_last_id: conversation.last_message_id,
+          message_pre_id: conversation.last_activity,
+          updated_at: +moment(),
+        },
+      );
+
+      return new BaseResponse(200, 'OK');
+    } catch (error) {
+      console.log('ConversationService ~ deleteConversation ~ error:', error);
+      throw new ExceptionResponse(400, 'FAILED', error);
+    }
+  }
+
+  async disableNotify(conversation_id: string, user_id: string) {
+    try {
+      const conversation = await this.getOneConversation(conversation_id);
+
+      if (!conversation?.members?.includes(user_id)) {
+        throw new ExceptionResponse(400, 'Không tìm thấy cuộc trò chuyện');
+      }
+
+      const hasConversationHidden =
+        await this.conversationDisableNotifyModel.exists({
+          user_id: user_id,
+          conversation_id: conversation_id,
+        });
+
+      if (hasConversationHidden) {
+        await this.conversationDisableNotifyModel.deleteOne({
+          user_id: user_id,
+          conversation_id: conversation_id,
+        });
+      } else {
+        await this.conversationDisableNotifyModel.create({
+          user_id: user_id,
+          conversation_id: conversation_id,
+          updated_at: +moment(),
+          created_at: +moment(),
+        });
+      }
+
+      return new BaseResponse(200, 'OK');
+    } catch (error) {
+      console.log('ConversationService ~ disableNotify ~ error:', error);
+      throw new ExceptionResponse(400, 'FAILED', error);
+    }
+  }
+
+  async pinConversation(user_id: string, conversation_id: string) {
+    try {
+      const conversation = await this.getOneConversation(conversation_id);
+
+      if (!conversation?.members?.includes(user_id)) {
+        throw new ExceptionResponse(400, 'Không tìm thấy cuộc trò chuyện');
+      }
+
+      const hasConversationHidden = await this.conversationPinnedModel.exists({
+        user_id: user_id,
+        conversation_id: conversation_id,
+      });
+
+      if (hasConversationHidden) {
+        await this.conversationPinnedModel.deleteOne({
+          user_id: user_id,
+          conversation_id: conversation_id,
+        });
+      } else {
+        await this.conversationPinnedModel.create({
+          user_id: user_id,
+          conversation_id: conversation_id,
+          updated_at: +moment(),
+          created_at: +moment(),
+        });
+      }
+
+      return new BaseResponse(200, 'OK');
+    } catch (error) {
+      console.log('ConversationService ~ pinConversation ~ error:', error);
+      throw new ExceptionResponse(400, 'FAILED', error);
+    }
   }
 }

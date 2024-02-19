@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import * as moment from 'moment';
 import { Model, Types } from 'mongoose';
 import {
+  BOOLEAN,
   CONVERSATION_MEMBER_PERMISSION,
   CONVERSATION_TYPE,
   MESSAGE_TYPE,
@@ -16,10 +17,99 @@ import {
   User,
 } from 'src/shared';
 import { BaseResponse } from 'src/shared/base-response.response';
+import { checkMongoId, generateRandomString } from 'src/util';
 import { CreateGroupConversationDto } from './dto/create-group-conversation.dto';
 
 @Injectable()
 export class ConversationGroupService {
+  async joinWithLink(link_join: string, user_id: string) {
+    try {
+      const conversation = await this.conversationModel.findOne({
+        is_join_with_link: BOOLEAN.TRUE,
+        link_join: link_join,
+        type: CONVERSATION_TYPE.GROUP,
+      });
+
+      if (!conversation) {
+        return new BaseResponse(404, 'Cuộc trò chuyện không tồn tại');
+      }
+
+      if (conversation?.members?.includes(user_id)) {
+        return new BaseResponse(200, 'Bạn đã là thành viên của nhóm', {
+          conversation_id: conversation._id.toString(),
+        });
+      }
+
+      const hasWaitingConfirmMember =
+        await this.conversationMemberWaitingModel.findOne({
+          conversation_id: conversation._id.toString(),
+          user_id: user_id,
+        });
+
+      if (hasWaitingConfirmMember) {
+        return new BaseResponse(
+          200,
+          'Bạn đã có trong danh sách chờ của thành viên nhóm',
+          {
+            conversation_id: conversation._id.toString(),
+          },
+        );
+      }
+
+      if (conversation.is_confirm_new_member) {
+        /**
+         * cần phê duyệt
+         */
+
+        await this.conversationMemberWaitingModel.create({
+          conversation_id: conversation._id.toString(),
+          created_at: +moment(),
+          updated_at: +moment(),
+          user_id: user_id,
+        });
+
+        return new BaseResponse(
+          200,
+          'Bạn cần chờ phê duyệt để tham gia nhóm!',
+          {
+            conversation_id: conversation._id.toString(),
+          },
+        );
+      } else {
+        /**
+         * không cần phê duyệt -> thành thẳng member
+         */
+        await this.conversationMemberModel.create({
+          conversation_id: conversation._id.toString(),
+          created_at: +moment(),
+          updated_at: +moment(),
+          user_id: +user_id,
+          permission: CONVERSATION_MEMBER_PERMISSION.MEMBER,
+          message_last_id: 0,
+          message_pre_id: 0,
+        });
+
+        conversation.members.push(user_id);
+        conversation.no_of_member += 1;
+
+        conversation.save();
+
+        return new BaseResponse(200, 'Tham gia nhóm thành công!', {
+          conversation_id: conversation._id,
+        });
+      }
+
+      /**
+       * Tạo tin nhắn
+       */
+
+      return new BaseResponse(200, 'OK');
+    } catch (error) {
+      console.log('ConversationGroupService ~ joinWithLink ~ error:', error);
+      throw new ExceptionResponse(400, 'FAILED', error);
+    }
+  }
+
   constructor(
     @InjectModel(User.name)
     private readonly userModel: Model<User>,
@@ -103,5 +193,44 @@ export class ConversationGroupService {
       console.log('ConversationGroupService ~ error:', error);
       return new BaseResponse(400, 'FAIL', error);
     }
+  }
+
+  async isJoinWithLink(conversation_id: string, user_id: string) {
+    try {
+      const conversation = await this.getOneConversation(conversation_id);
+
+      if (
+        !conversation?.members?.includes(user_id) ||
+        conversation.type != CONVERSATION_TYPE.GROUP
+      ) {
+        throw new ExceptionResponse(400, 'Không tìm thấy cuộc trò chuyện');
+      }
+
+      conversation.is_join_with_link =
+        conversation.is_join_with_link == BOOLEAN.TRUE
+          ? BOOLEAN.FALSE
+          : BOOLEAN.TRUE;
+
+      if (conversation.is_join_with_link == BOOLEAN.FALSE)
+        conversation.link_join = '';
+      else conversation.link_join = generateRandomString(10);
+
+      conversation.save();
+
+      return new BaseResponse(200, 'OK', { link_join: conversation.link_join });
+    } catch (error) {
+      console.log('ConversationGroupService ~ isJoinWithLink ~ error:', error);
+      throw new ExceptionResponse(400, 'FAILED', error);
+    }
+  }
+
+  private async getOneConversation(conversation_id: string) {
+    if (!checkMongoId(conversation_id)) {
+      throw new ExceptionResponse(400, 'Conversation_id không hợp lệ');
+    }
+
+    return await this.conversationModel.findById({
+      _id: new Types.ObjectId(conversation_id),
+    });
   }
 }
