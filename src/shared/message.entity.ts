@@ -38,8 +38,9 @@ export class Message extends BaseModel {
   message: string;
 
   @Prop({
-    type: 'string',
+    type: [String],
     nullable: true,
+    default: [],
   })
   media: string[];
 
