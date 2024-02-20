@@ -14,7 +14,6 @@ import { CreateConversationDto } from './dto/create-conversation.dto';
 import { DetailConversation } from './dto/detail-conversation.dto';
 import { CreateConversationResponse } from './response/create-conversation-response';
 import { QueryConversation } from './response/query-conversation.dto';
-import { UpdatePermissionConversation } from './dto/update-permission.dto';
 
 @ApiTags('Conversation')
 @Controller('conversation')
@@ -185,26 +184,6 @@ export class ConversationController {
       await this.conversationService.updateBackgroundConversation(
         param.conversation_id,
         back_ground,
-        req.user._id,
-      );
-    return data;
-  }
-
-  @Post('update-permission')
-  @ApiOperation({ summary: 'Update quyền của member trong cuộc trò chuyện ' })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'Update quyền của member trong cuộc trò chuyện ',
-  })
-  async updatePermissionMemberConversation(
-    @Request() req: RequestWithUser,
-    @Body() body: UpdatePermissionConversation,
-    @Query() param: DetailConversation,
-  ) {
-    const data: any =
-      await this.conversationService.updatePermissionConversation(
-        param.conversation_id,
-        body,
         req.user._id,
       );
     return data;

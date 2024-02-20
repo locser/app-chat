@@ -19,6 +19,7 @@ import {
 import { BaseResponse } from 'src/shared/base-response.response';
 import { checkMongoId, generateRandomString } from 'src/util';
 import { CreateGroupConversationDto } from './dto/create-group-conversation.dto';
+import { UpdatePermissionConversation } from './dto/update-permission.dto';
 
 @Injectable()
 export class ConversationGroupService {
@@ -126,6 +127,76 @@ export class ConversationGroupService {
     @InjectModel(Message.name)
     private readonly messageModel: Model<Message>,
   ) {}
+
+  async updatePermissionConversation(
+    conversation_id: string,
+    body: UpdatePermissionConversation,
+    user_id: string,
+  ) {
+    try {
+      const member_id = body.user_id;
+      const permission = body.permission;
+
+      if (!checkMongoId(member_id)) {
+        throw new ExceptionResponse(400, 'member_id không hợp lệ');
+      }
+
+      const conversation = await this.getOneConversation(conversation_id);
+
+      if (conversation.type !== CONVERSATION_TYPE.GROUP) {
+        throw new ExceptionResponse(
+          404,
+          'Chỉ có thể sử dụng với cuộc trò chuyện nhóm!',
+        );
+      }
+
+      if (
+        !conversation?.members?.includes(user_id) ||
+        !conversation?.members?.includes(member_id)
+      ) {
+        throw new ExceptionResponse(404, 'Có user không hợp lệ!');
+      }
+
+      if (conversation.owner_id !== user_id) {
+        throw new ExceptionResponse(400, 'Bạn không có quyền sử dụng!');
+      }
+
+      if (permission == CONVERSATION_MEMBER_PERMISSION.OWNER) {
+        await this.conversationMemberModel.updateOne(
+          {
+            user_id: user_id,
+            conversation_id: conversation_id,
+          },
+          {
+            permission: CONVERSATION_MEMBER_PERMISSION.MEMBER,
+          },
+        );
+
+        await this.conversationModel.updateOne(
+          { _id: conversation._id },
+          { owner_id: member_id },
+        );
+      }
+
+      await this.conversationMemberModel.updateOne(
+        {
+          user_id: member_id,
+          conversation_id: conversation_id,
+        },
+        {
+          permission: permission,
+        },
+      );
+
+      return new BaseResponse(200, 'OK', { name: conversation.name });
+    } catch (error) {
+      console.log(
+        'ConversationService ~ updatePermissionConversation ~ error:',
+        error,
+      );
+      return new BaseResponse(400, 'FAIL', error);
+    }
+  }
 
   async createNewGroupConversation(
     user_id: string,
