@@ -25,9 +25,158 @@ import { CreateConversationDto } from './dto/create-conversation.dto';
 import { DetailConversation } from './dto/detail-conversation.dto';
 import { DetailConversationResponse } from './response/detail-conversation.response';
 import { QueryConversation } from './response/query-conversation.dto';
+import { UpdatePermissionConversation } from './dto/update-permission.dto';
 
 @Injectable()
 export class ConversationService {
+  async updatePermissionConversation(
+    conversation_id: string,
+    body: UpdatePermissionConversation,
+    user_id: string,
+  ) {
+    try {
+      const member_id = body.user_id;
+      const permission = body.permission;
+
+      if (!checkMongoId(member_id)) {
+        throw new ExceptionResponse(400, 'member_id không hợp lệ');
+      }
+
+      const conversation = await this.getOneConversation(conversation_id);
+
+      if (
+        !conversation?.members?.includes(user_id) ||
+        !conversation?.members?.includes(member_id)
+      ) {
+        throw new ExceptionResponse(404, 'Có user không hợp lệ!');
+      }
+
+      if (conversation.owner_id !== user_id) {
+        throw new ExceptionResponse(400, 'Bạn không có quyền sử dụng!');
+      }
+
+      if (permission == CONVERSATION_MEMBER_PERMISSION.OWNER) {
+        await this.conversationMemberModel.updateOne(
+          {
+            user_id: user_id,
+            conversation_id: conversation_id,
+          },
+          {
+            permission: CONVERSATION_MEMBER_PERMISSION.MEMBER,
+          },
+        );
+
+        await this.conversationModel.updateOne(
+          { _id: conversation._id },
+          { owner_id: member_id },
+        );
+      }
+
+      await this.conversationMemberModel.updateOne(
+        {
+          user_id: member_id,
+          conversation_id: conversation_id,
+        },
+        {
+          permission: permission,
+        },
+      );
+
+      return new BaseResponse(200, 'OK', { name: conversation.name });
+    } catch (error) {
+      console.log(
+        'ConversationService ~ updatePermissionConversation ~ error:',
+        error,
+      );
+      return new BaseResponse(400, 'FAIL', error);
+    }
+  }
+
+  async updateBackgroundConversation(
+    conversation_id: string,
+    back_ground: string,
+    user_id: string,
+  ) {
+    try {
+      if (!back_ground)
+        throw new ExceptionResponse(400, 'Không thể đặt tên trống');
+      const conversation = await this.getOneConversation(conversation_id);
+
+      if (!conversation?.members?.includes(user_id)) {
+        throw new ExceptionResponse(404, 'Không tìm thấy cuộc trò chuyện');
+      }
+
+      conversation.background = back_ground;
+
+      conversation.save();
+
+      return new BaseResponse(200, 'OK', { name: conversation.name });
+    } catch (error) {
+      console.log(
+        'ConversationService ~ updateBackgroundConversation ~ error:',
+        error,
+      );
+      return new BaseResponse(400, 'FAIL', error);
+    }
+  }
+
+  async settingConfirmMemberConversation(
+    conversation_id: string,
+    user_id: string,
+  ) {
+    try {
+      const conversation = await this.getOneConversation(conversation_id);
+
+      if (
+        !conversation?.members?.includes(user_id) ||
+        conversation.owner_id !== user_id
+      ) {
+        throw new ExceptionResponse(400, 'Không tìm thấy cuộc trò chuyện');
+      }
+
+      conversation.is_confirm_new_member = +!conversation.is_confirm_new_member;
+
+      conversation.save();
+
+      return new BaseResponse(200, 'OK');
+    } catch (error) {
+      console.log(
+        'ConversationService ~ settingConfirmMemberConversation ~ error:',
+        error,
+      );
+      return new BaseResponse(400, 'FAIL', error);
+    }
+  }
+  async updateNameConversation(
+    conversation_id: string,
+    name: string,
+    user_id: string,
+  ) {
+    try {
+      if (!name) throw new ExceptionResponse(400, 'Không thể đặt tên trống');
+      const conversation = await this.getOneConversation(conversation_id);
+
+      if (
+        !conversation?.members?.includes(user_id) ||
+        conversation.type !== CONVERSATION_TYPE.GROUP
+      ) {
+        throw new ExceptionResponse(404, 'Không tìm thấy cuộc trò chuyện');
+      }
+
+      conversation.name = name;
+
+      conversation.save();
+
+      return new BaseResponse(200, 'OK', { name: conversation.name });
+    } catch (error) {
+      console.log(
+        'ConversationService ~ updateNameConversation ~ error:',
+        error,
+      );
+      return new BaseResponse(400, 'FAIL', error);
+    }
+  }
+
   private async getOneConversation(conversation_id: string) {
     if (!checkMongoId(conversation_id)) {
       throw new ExceptionResponse(400, 'Conversation_id không hợp lệ');
