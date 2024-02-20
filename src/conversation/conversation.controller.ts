@@ -14,6 +14,7 @@ import { CreateConversationDto } from './dto/create-conversation.dto';
 import { DetailConversation } from './dto/detail-conversation.dto';
 import { CreateConversationResponse } from './response/create-conversation-response';
 import { QueryConversation } from './response/query-conversation.dto';
+
 @ApiTags('Conversation')
 @Controller('conversation')
 export class ConversationController {
@@ -131,72 +132,60 @@ export class ConversationController {
     return data;
   }
 
-  // @Post('join-link')
-  // @ApiOperation({ summary: 'Bật tắt tham gia bằng link' })
-  // @ApiResponse({
-  //   status: HttpStatus.OK,
-  //   description: 'Bật tắt tham gia bằng link',
-  // })
-  // async isJoinWithLink(
-  //   @Request() req: RequestWithUser,
-  //   @Query() param: DetailConversation,
-  // ) {
-  //   const data = await this.conversationService.isJoinWithLink(
-  //     param.conversation_id,
-  //     req.user._id,
-  //   );
-  //   return data;
-  // }
+  @Post('is_confirm_member')
+  @ApiOperation({ summary: 'Bật tắt duyệt thành viên' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Bật tắt duyệt thành viên',
+  })
+  async settingConfirmMemberConversation(
+    @Request() req: RequestWithUser,
+    @Query() param: DetailConversation,
+  ) {
+    const data =
+      await this.conversationService.settingConfirmMemberConversation(
+        param.conversation_id,
+        req.user._id,
+      );
+    return data;
+  }
 
-  // @Post('update-name')
-  // @ApiOperation({ summary: 'Tham gia bằng link' })
-  // @ApiResponse({
-  //   status: HttpStatus.OK,
-  //   type: JoinWithLinkResponseSwagger,
-  //   description: 'Tham gia bằng link',
-  // })
-  // async joinWithLink(
-  //   @Request() req: RequestWithUser,
-  //   @Query() param: QueryJoinWithLinkConversationDto,
-  // ) {
-  //   const data: any = await this.conversationService.joinWithLink(
-  //     param.link,
-  //     req.user._id,
-  //   );
-  //   return data;
-  // }
+  @Post('update-name')
+  @ApiOperation({ summary: 'Đổi tên cuộc trò chuyện' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Đổi tên cuộc trò chuyện',
+  })
+  async updateNameConversation(
+    @Request() req: RequestWithUser,
+    @Body('name') name: string,
+    @Query() param: DetailConversation,
+  ) {
+    const data: any = await this.conversationService.updateNameConversation(
+      param.conversation_id,
+      name,
+      req.user._id,
+    );
+    return data;
+  }
 
-  // @Post('update-background')
-  // @ApiOperation({ summary: 'Tham gia bằng link' })
-  // @ApiResponse({
-  //   status: HttpStatus.OK,
-  //   description: 'Tham gia bằng link',
-  // })
-  // async joinWithLink(
-  //   @Request() req: RequestWithUser,
-  //   @Query() param: QueryJoinWithLinkConversationDto,
-  // ) {
-  //   const data: any = await this.conversationService.joinWithLink(
-  //     param.link,
-  //     req.user._id,
-  //   );
-  //   return data;
-  // }
-
-  // @Post('join-link/:link')
-  // @ApiOperation({ summary: 'Tham gia bằng link' })
-  // @ApiResponse({
-  //   status: HttpStatus.OK,
-  //   description: 'Tham gia bằng link',
-  // })
-  // async joinWithLink(
-  //   @Request() req: RequestWithUser,
-  //   @Query() param: QueryJoinWithLinkConversationDto,
-  // ) {
-  //   const data: any = await this.conversationService.joinWithLink(
-  //     param.link,
-  //     user.user_id,
-  //   );
-  //   return data;
-  // }
+  @Post('update-background')
+  @ApiOperation({ summary: 'Đổi back-ground cuộc trò chuyện' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Đổi back-ground cuộc trò chuyện',
+  })
+  async updateBackGroundConversation(
+    @Request() req: RequestWithUser,
+    @Body('back_ground') back_ground: string,
+    @Query() param: DetailConversation,
+  ) {
+    const data: any =
+      await this.conversationService.updateBackgroundConversation(
+        param.conversation_id,
+        back_ground,
+        req.user._id,
+      );
+    return data;
+  }
 }

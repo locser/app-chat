@@ -104,7 +104,7 @@ export class AuthService {
           phone: signUpDto.phone,
           password: hashedPassword,
         }),
-      ); // TODO: Generate a JWT and return it here
+      );
       // instead of the user object
       return new BaseResponse(200, 'OK', newUser);
     } catch (error) {

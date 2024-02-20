@@ -12,6 +12,7 @@ import { ConversationGroupService } from './conversation-group.service';
 import { CreateGroupConversationDto } from './dto/create-group-conversation.dto';
 import { DetailConversation } from 'src/conversation/dto/detail-conversation.dto';
 import { QueryJoinWithLinkConversationDto } from './dto/query-join-with-link.dto';
+import { UpdatePermissionConversation } from './dto/update-permission.dto';
 
 @ApiTags('API TRÒ CHUYỆN NHÓM')
 @Controller('conversation-group')
@@ -64,6 +65,26 @@ export class ConversationGroupController {
       param.link_join,
       req.user._id,
     );
+    return data;
+  }
+
+  @Post('update-permission')
+  @ApiOperation({ summary: 'Update quyền của member trong cuộc trò chuyện ' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Update quyền của member trong cuộc trò chuyện ',
+  })
+  async updatePermissionMemberConversation(
+    @Request() req: RequestWithUser,
+    @Body() body: UpdatePermissionConversation,
+    @Query() param: DetailConversation,
+  ) {
+    const data: any =
+      await this.conversationGroupService.updatePermissionConversation(
+        param.conversation_id,
+        body,
+        req.user._id,
+      );
     return data;
   }
 }

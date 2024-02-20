@@ -289,7 +289,6 @@ export class ConnectionService {
         'message image không hợp lệ, không để trống conversation_id hoặc media rỗng',
       );
     }
-    console.log('ConnectionService ~ validateImageMessage ~ media:', media);
 
     // tạo message:::
     const newMessage = await this.messageModel.create({
