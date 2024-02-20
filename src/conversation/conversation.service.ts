@@ -46,7 +46,9 @@ export class ConversationService {
 
       conversation.save();
 
-      return new BaseResponse(200, 'OK', { name: conversation.name });
+      return new BaseResponse(200, 'OK', {
+        back_ground: conversation.background,
+      });
     } catch (error) {
       console.log(
         'ConversationService ~ updateBackgroundConversation ~ error:',

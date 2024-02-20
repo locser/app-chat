@@ -7,6 +7,7 @@ import {
   CONVERSATION_MEMBER_PERMISSION,
   CONVERSATION_TYPE,
   MESSAGE_TYPE,
+  USER_STATUS,
 } from 'src/enum';
 import {
   Conversation,
@@ -139,6 +140,15 @@ export class ConversationGroupService {
 
       if (!checkMongoId(member_id)) {
         throw new ExceptionResponse(400, 'member_id không hợp lệ');
+      }
+
+      const member = await this.userModel.findOne({
+        status: USER_STATUS.ACTIVE,
+        _id: new Types.ObjectId(member_id),
+      });
+
+      if (!member) {
+        throw new ExceptionResponse(404, 'Không tìm thấy user hợp lệ!');
       }
 
       const conversation = await this.getOneConversation(conversation_id);
