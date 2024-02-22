@@ -13,6 +13,7 @@ import { CreateGroupConversationDto } from './dto/create-group-conversation.dto'
 import { DetailConversation } from 'src/conversation/dto/detail-conversation.dto';
 import { QueryJoinWithLinkConversationDto } from './dto/query-join-with-link.dto';
 import { UpdatePermissionConversation } from './dto/update-permission.dto';
+import { AddMemberConversationDto } from './dto/add-member-conversation.dto';
 
 @ApiTags('API TRÒ CHUYỆN NHÓM')
 @Controller('conversation-group')
@@ -84,6 +85,60 @@ export class ConversationGroupController {
         param.conversation_id,
         body,
         req.user._id,
+      );
+    return data;
+  }
+
+  @Post('leave')
+  @ApiOperation({ summary: 'User rời nhóm cuộc trò chuyện ' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'User rời nhóm  cuộc trò chuyện ',
+  })
+  async userLeaveConversation(
+    @Request() req: RequestWithUser,
+    @Query() param: DetailConversation,
+  ) {
+    const data: any = await this.conversationGroupService.userLeaveConversation(
+      param.conversation_id,
+      req.user._id,
+    );
+    return data;
+  }
+
+  @Post('disband')
+  @ApiOperation({ summary: 'Giải tán cuộc trò chuyện ' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Giải tán cuộc trò chuyện ',
+  })
+  async disbandConversation(
+    @Request() req: RequestWithUser,
+    @Query() param: DetailConversation,
+  ) {
+    const data: any = await this.conversationGroupService.disbandConversation(
+      param.conversation_id,
+      req.user._id,
+    );
+    return data;
+  }
+
+  @Post('add-member')
+  @ApiOperation({ summary: 'Thêm thành viên cuộc trò chuyện ' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Thêm thành viên cuộc trò chuyện ',
+  })
+  async addMembersConversation(
+    @Request() req: RequestWithUser,
+    @Query() param: DetailConversation,
+    @Body() body: AddMemberConversationDto,
+  ) {
+    const data: any =
+      await this.conversationGroupService.addMembersConversation(
+        param.conversation_id,
+        req.user._id,
+        body,
       );
     return data;
   }

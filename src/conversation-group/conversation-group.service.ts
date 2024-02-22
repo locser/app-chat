@@ -5,6 +5,7 @@ import { Model, Types } from 'mongoose';
 import {
   BOOLEAN,
   CONVERSATION_MEMBER_PERMISSION,
+  CONVERSATION_STATUS,
   CONVERSATION_TYPE,
   MESSAGE_TYPE,
   USER_STATUS,
@@ -21,9 +22,202 @@ import { BaseResponse } from 'src/shared/base-response.response';
 import { checkMongoId, generateRandomString } from 'src/util';
 import { CreateGroupConversationDto } from './dto/create-group-conversation.dto';
 import { UpdatePermissionConversation } from './dto/update-permission.dto';
+import { AddMemberConversationDto } from './dto/add-member-conversation.dto';
 
 @Injectable()
 export class ConversationGroupService {
+  async addMembersConversation(
+    conversation_id: string,
+    user_id: string,
+    body: AddMemberConversationDto,
+  ) {
+    try {
+      const userIdAdded = body.members;
+      const conversation = await this.getOneConversation(conversation_id);
+
+      if (!conversation || conversation.status != CONVERSATION_STATUS.ACTIVE) {
+        throw new ExceptionResponse(404, 'Không tìm thấy cuộc trò chuyện');
+      }
+
+      const listUserAdd = await this.userModel.find({
+        _id: { $in: userIdAdded.map((item) => new Types.ObjectId(item)) },
+        status: USER_STATUS.ACTIVE,
+      });
+
+      if (listUserAdd.length !== userIdAdded.length) {
+        throw new ExceptionResponse(400, 'Có người dùng không hợp lệ');
+      }
+
+      const checkMemberJoinedChat = await this.conversationMemberModel.find({
+        conversation_id: conversation_id,
+        user_id: { $in: userIdAdded },
+      });
+
+      if (checkMemberJoinedChat.length) {
+        throw new ExceptionResponse(
+          404,
+          'Có người dùng đã là thành viên của nhóm',
+        );
+      }
+
+      const checkMemberJoinedWaitingConfirm =
+        await this.conversationMemberModel.find({
+          conversation_id: conversation_id,
+          user_id: { $in: userIdAdded },
+        });
+
+      if (checkMemberJoinedWaitingConfirm.length) {
+        throw new ExceptionResponse(
+          404,
+          'Có người dùng đã trong danh sách chờ duyệt thành viên',
+        );
+      }
+
+      const userPermission = await this.conversationMemberModel.findOne({
+        user_id: user_id,
+        conversation_id: conversation_id,
+      });
+
+      if (userPermission.permission == CONVERSATION_MEMBER_PERMISSION.MEMBER) {
+        /** thêm danh sách chờ hoặc add member trực tiếp */
+
+        if (conversation.is_confirm_new_member == BOOLEAN.TRUE) {
+          /**
+           * add vào waiting_confirm
+           */
+
+          await this.conversationMemberWaitingModel.create(
+            userIdAdded.map((item) => {
+              return {
+                conversation_id: conversation_id,
+                user_id: item,
+                updated_at: +moment(),
+                created_at: +moment(),
+              };
+            }),
+          );
+        } else {
+          /**
+           * add vao nhom
+           */
+          await addListMember(userIdAdded, conversation_id);
+        }
+      } else {
+        /**
+         * Thêm thành member trực tiếp
+         */
+
+        await addListMember(userIdAdded, conversation_id);
+      }
+
+      conversation.last_activity = +moment();
+      conversation.save();
+
+      return new BaseResponse(200, 'OK');
+    } catch (error) {
+      console.log(
+        'ConversationGroupService ~ disbandConversation ~ error:',
+        error,
+      );
+
+      return error;
+    }
+
+    async function addListMember(
+      userIdAdded: string[],
+      conversation_id: string,
+    ) {
+      await this.conversationMemberModel.create(
+        userIdAdded.map((item) => {
+          return {
+            conversation_id: conversation_id,
+            user_id: item,
+            updated_at: +moment(),
+            created_at: +moment(),
+            message_last_id: 0,
+            message_pre_id: 0,
+            permission: CONVERSATION_MEMBER_PERMISSION.MEMBER,
+          };
+        }),
+      );
+
+      await this.conversationModel.updateOne(
+        {
+          _id: conversation_id,
+        },
+        { $push: { members: { $each: userIdAdded } } },
+      );
+    }
+  }
+  async disbandConversation(conversation_id: string, user_id: string) {
+    try {
+      const conversation = await this.getOneConversation(conversation_id);
+
+      if (
+        !conversation ||
+        conversation.status != CONVERSATION_STATUS.ACTIVE ||
+        !conversation.members.includes(user_id)
+      ) {
+        throw new ExceptionResponse(404, 'Không tìm thấy cuộc trò chuyện');
+      }
+
+      if (conversation.owner_id !== user_id)
+        throw new ExceptionResponse(
+          400,
+          'Bạn không có quyền sử dụng chức năng này',
+        );
+
+      conversation.status = CONVERSATION_STATUS.NOT_ACTIVE;
+
+      conversation.save();
+
+      return new BaseResponse(200, 'OK');
+    } catch (error) {
+      console.log(
+        'ConversationGroupService ~ disbandConversation ~ error:',
+        error,
+      );
+
+      return error;
+    }
+  }
+
+  async userLeaveConversation(conversation_id: string, user_id: string) {
+    try {
+      const conversation = await this.getOneConversation(conversation_id);
+
+      if (
+        !conversation ||
+        conversation.status != CONVERSATION_STATUS.ACTIVE ||
+        !conversation.members.includes(user_id)
+      ) {
+        throw new ExceptionResponse(404, 'Không tìm thấy cuộc trò chuyện');
+      }
+
+      if (conversation.owner_id == user_id)
+        throw new ExceptionResponse(
+          400,
+          'Hãy chuyển quyền trưởng nhóm trước khi rời nhóm',
+        );
+
+      await this.conversationMemberModel.deleteOne({
+        user_id: user_id,
+        conversation_id: conversation_id,
+      });
+
+      conversation.members.filter((item) => item != user_id);
+
+      conversation.save();
+      return new BaseResponse(200, 'OK');
+    } catch (error) {
+      console.log(
+        'ConversationGroupService ~ userLeaveConversation ~ error:',
+        error,
+      );
+
+      return error;
+    }
+  }
   async joinWithLink(link_join: string, user_id: string) {
     try {
       const conversation = await this.conversationModel.findOne({
