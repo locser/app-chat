@@ -13,10 +13,16 @@ import {
 import { Server, Socket } from 'socket.io';
 import { ConnectionService } from './connection.service';
 // import { ExceptionResponse } from 'src/shared';
-import { Conversation, SocketWithUser, UserResponse } from 'src/shared';
+import {
+  Conversation,
+  ExceptionResponse,
+  SocketWithUser,
+  UserResponse,
+} from 'src/shared';
 import { formatUnixTimestamp } from 'src/util';
 import { JoinRoomDto } from './dto/join-room.dto';
 import { MessageDto } from './dto/message-text.dto';
+import { SendCallRequestDto } from './dto/send-call-request.dto';
 import { UserMessageResponse } from './response/user-message.response';
 
 @WebSocketGateway({
@@ -200,6 +206,127 @@ export class ConnectionGateway
   async handleMessage(
     @ConnectedSocket() client: SocketWithUser,
     @MessageBody() data: MessageDto,
+  ) {
+    try {
+      const hasAccess = await this.connectionService.beforeJoinRoom(
+        client.user._id,
+        data.conversation_id,
+      );
+
+      if (!hasAccess) {
+        throw new WsException('Bạn không có quyền truy cập!!');
+      }
+
+      const { message, conversation } =
+        await this.connectionService.handleMessage(client.user._id, data);
+
+      // const messageResponse = new MessageResponse();
+      this.emitSocketMessage(client.user, message, conversation, 'message');
+    } catch (error) {
+      console.log('error:', error);
+      this.emitSocketError(
+        client.user._id.toString(),
+        'message',
+        error?.message || '',
+        error,
+      );
+    }
+  }
+
+  @SubscribeMessage('send-call-request')
+  async handleSendCallRequest(
+    @ConnectedSocket() client: SocketWithUser,
+    @MessageBody() data: SendCallRequestDto,
+  ) {
+    try {
+      const userTarget = await this.connectionService.validateUserTarget(
+        data.target_user_id,
+      );
+
+      if (!userTarget) {
+        throw new ExceptionResponse(404, 'User không hợp lệ!');
+      }
+
+      this.server.to(userTarget._id.toString()).emit('request-call-video', {
+        user_from: client.user,
+        user_to: userTarget,
+        signal_data: data?.signal_data || {},
+      });
+    } catch (error) {
+      console.log('error:', error);
+      this.emitSocketError(
+        client.user._id.toString(),
+        'send-call-request',
+        error?.message || '',
+        error,
+      );
+    }
+  }
+
+  @SubscribeMessage('answer-call-request')
+  async handleAnswerCallRequest(
+    @ConnectedSocket() client: SocketWithUser,
+    @MessageBody() data: SendCallRequestDto,
+  ) {
+    try {
+      const userTarget = await this.connectionService.validateUserTarget(
+        data.target_user_id,
+      );
+
+      if (!userTarget) {
+        throw new ExceptionResponse(404, 'User không hợp lệ!');
+      }
+
+      this.server.to(userTarget._id.toString()).emit('answer-call-video', {
+        user_from: client.user,
+        user_to: userTarget,
+        signal_data: data?.signal_data || {},
+      });
+    } catch (error) {
+      console.log('error:', error);
+      this.emitSocketError(
+        client.user._id.toString(),
+        'answer-call-request',
+        error?.message || '',
+        error,
+      );
+    }
+  }
+
+  @SubscribeMessage('deny-call-request')
+  async handleDenyCallRequest(
+    @ConnectedSocket() client: SocketWithUser,
+    @MessageBody() data: SendCallRequestDto,
+  ) {
+    try {
+      const userTarget = await this.connectionService.validateUserTarget(
+        data.target_user_id,
+      );
+
+      if (!userTarget) {
+        throw new ExceptionResponse(404, 'User không hợp lệ!');
+      }
+
+      this.server.to(userTarget._id.toString()).emit('deny-call-video', {
+        user_from: client.user,
+        user_to: userTarget,
+        message: data?.message || 'Người dùng hiện không liên lạc được!',
+      });
+    } catch (error) {
+      console.log('error:', error);
+      this.emitSocketError(
+        client.user._id.toString(),
+        'deny-call-request',
+        error?.message || '',
+        error,
+      );
+    }
+  }
+
+  @SubscribeMessage('call-user')
+  async handleCallUser(
+    @ConnectedSocket() client: SocketWithUser,
+    @MessageBody() data: any,
   ) {
     try {
       const hasAccess = await this.connectionService.beforeJoinRoom(
