@@ -1,7 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { CONVERSATION_STATUS, MESSAGE_STATUS, MESSAGE_TYPE } from 'src/enum';
+import {
+  CONVERSATION_STATUS,
+  MESSAGE_STATUS,
+  MESSAGE_TYPE,
+  USER_STATUS,
+} from 'src/enum';
 import {
   Conversation,
   ConversationMember,
@@ -11,9 +16,36 @@ import {
 } from 'src/shared';
 import { MessageDto } from './dto/message-text.dto';
 import * as moment from 'moment';
+import { checkMongoId } from 'src/util';
 
 @Injectable()
 export class ConnectionService {
+  async validateUserTarget(target_user_id: string) {
+    const validUserId = checkMongoId(target_user_id);
+
+    if (!validUserId) {
+      return null;
+    }
+
+    const userTarget = await this.userModel.findOne(
+      {
+        _id: new Types.ObjectId(target_user_id),
+        status: USER_STATUS.ACTIVE,
+      },
+      {
+        _id: true,
+        avatar: true,
+        full_name: true,
+      },
+    );
+
+    if (!userTarget) {
+      return null;
+    }
+
+    return userTarget;
+  }
+
   async handleMessage(user_id: string, data: MessageDto) {
     const { type, conversation_id } = data;
 
@@ -62,7 +94,7 @@ export class ConnectionService {
     private readonly messageModel: Model<Message>,
 
     @InjectModel(User.name)
-    private readonly userModel: Model<Message>,
+    private readonly userModel: Model<User>,
   ) {}
 
   async checkValidConversation(
