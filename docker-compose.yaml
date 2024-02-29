@@ -1,0 +1,33 @@
+# Docker Compose Configuration
+# visit https://docs.docker.com/compose/
+
+version: '3.8'
+services:
+  # app service for your backend
+  app:
+    container_name: app-chat
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    environment:
+      JWT_SECRET: LOCSER
+      MONGODB_HOST: mongodb://database:27017/
+      MONGODB_DBNAME: app-chat
+      MONGODB_OPTIONS: ?retryWrites=true&w=majority
+
+    ports:
+      - '3000:3000'
+    depends_on:
+      - database
+
+  # start the mongodb service as container
+  database:
+    image: mongo:6.0
+    container_name: mongodb
+    restart: always
+    ports:
+      - '27017:27017'
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: # DATABASE_NAME
+      MONGO_INITDB_ROOT_PASSWORD: # DATABASE_USER
+      MONGO_INITDB_DATABASE: app-chat

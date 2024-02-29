@@ -22,6 +22,7 @@ export class Message extends BaseModel {
 
   @Prop({
     type: 'string',
+    ref: 'User',
   })
   user_id: string;
 
