@@ -4,6 +4,7 @@ import { Model, Types } from 'mongoose';
 import { Conversation, ExceptionResponse, Message, User } from 'src/shared';
 import { GetAllMessagesDto } from './dto/get-all-messages.dto';
 import { CONVERSATION_STATUS } from 'src/enum';
+import { formatUnixTimestamp } from 'src/util';
 
 @Injectable()
 export class MessageService {
@@ -44,17 +45,27 @@ export class MessageService {
 
       const messageList = await this.messageModel
         .find(querySearch)
-        .populate('user_id', {})
+        .populate('user_id', { _id: 1, username: 1, avatar: 1, full_name: 1 })
         .sort({ created_at: 'desc' })
-        .limit(+limit);
+        .limit(+limit)
+        .lean();
 
       // get user target, get reaction, get tag_user
 
       return messageList.map((item) => {
         return {
-          ...(item as any)._doc,
-          created_at: new Date(item.created_at),
-          updated_at: new Date(item.updated_at),
+          user: item.user_id,
+          _id: item._id,
+          conversation_id: item.conversation_id,
+          user_target: item.user_target,
+          message: item.message,
+          no_of_reaction: item.no_of_reaction,
+          type: item.type,
+          status: item.status,
+          user_tag: item.user_tag,
+          reaction: item.reaction,
+          created_at: formatUnixTimestamp(item.created_at),
+          updated_at: formatUnixTimestamp(item.updated_at),
         };
       });
     } catch (error) {
