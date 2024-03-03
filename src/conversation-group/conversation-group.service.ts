@@ -22,10 +22,100 @@ import { BaseResponse } from 'src/shared/base-response.response';
 import { checkMongoId, generateRandomString } from 'src/util';
 import { CreateGroupConversationDto } from './dto/create-group-conversation.dto';
 import { UpdatePermissionConversation } from './dto/update-permission.dto';
-import { AddMemberConversationDto } from './dto/add-member-conversation.dto';
+import {
+  AddMemberConversationDto,
+  RemoveMemberConversationDto,
+} from './dto/add-member-conversation.dto';
 
 @Injectable()
 export class ConversationGroupService {
+  async getMembersConversation(conversation_id: string, user_id: string) {
+    try {
+      const listMember = await this.conversationMemberModel
+        .find({
+          conversation_id: conversation_id,
+        })
+        .populate('user_id', '_id full_name avatar status')
+        .sort({ permission: 'desc', created_at: 'desc' })
+        .lean();
+
+      const response = listMember.map((item) => {
+        const user = item.user_id as unknown as User;
+        return {
+          ...user,
+          user_id: user._id,
+          permission: item.permission,
+        };
+      });
+
+      return new BaseResponse(200, 'OK', response);
+    } catch (error) {
+      console.log(
+        'ConversationGroupService ~ getMembersConversation ~ error:',
+        error,
+      );
+    }
+  }
+  async removeMembersConversation(
+    conversation_id: string,
+    user_id: string,
+    body: RemoveMemberConversationDto,
+  ) {
+    try {
+      const member_id = body.user_id;
+
+      if (user_id == member_id) {
+        throw new ExceptionResponse(400, 'Không thể xóa chính mình');
+      }
+
+      const conversation = await this.getOneConversation(conversation_id);
+
+      if (
+        !conversation ||
+        conversation.status != CONVERSATION_STATUS.ACTIVE ||
+        !conversation.members.includes(user_id)
+      ) {
+        throw new ExceptionResponse(404, 'Không tìm thấy cuộc trò chuyện');
+      }
+
+      if (!conversation.members.includes(member_id)) {
+        throw new ExceptionResponse(
+          400,
+          'Không tìm thấy nguời dùng này trong trò chuyện',
+        );
+      }
+
+      const permissionUser = await this.conversationMemberModel.findOne({
+        user_id: user_id,
+        conversation_id: conversation_id,
+      });
+
+      if (
+        !permissionUser ||
+        permissionUser?.permission === CONVERSATION_MEMBER_PERMISSION.MEMBER
+      ) {
+        throw new ExceptionResponse(
+          400,
+          'Bạn không có quyền sử dụng chức năng này',
+        );
+      }
+
+      conversation.members = conversation.members.filter(
+        (item) => item != member_id,
+      );
+      conversation.no_of_member -= 1;
+      conversation.last_activity = +moment();
+
+      await conversation.save();
+
+      return new BaseResponse(200, 'OK');
+    } catch (error) {
+      console.log(
+        'ConversationGroupService ~ removeMembersConversation ~ error:',
+        error,
+      );
+    }
+  }
   async addMembersConversation(
     conversation_id: string,
     user_id: string,

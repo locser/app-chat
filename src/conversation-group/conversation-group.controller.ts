@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Get,
   HttpStatus,
   Post,
   Query,
@@ -13,7 +14,10 @@ import { CreateGroupConversationDto } from './dto/create-group-conversation.dto'
 import { DetailConversation } from 'src/conversation/dto/detail-conversation.dto';
 import { QueryJoinWithLinkConversationDto } from './dto/query-join-with-link.dto';
 import { UpdatePermissionConversation } from './dto/update-permission.dto';
-import { AddMemberConversationDto } from './dto/add-member-conversation.dto';
+import {
+  AddMemberConversationDto,
+  RemoveMemberConversationDto,
+} from './dto/add-member-conversation.dto';
 
 @ApiTags('API TRÒ CHUYỆN NHÓM')
 @Controller('conversation-group')
@@ -139,6 +143,44 @@ export class ConversationGroupController {
         param.conversation_id,
         req.user._id,
         body,
+      );
+    return data;
+  }
+
+  @Post('remove-member')
+  @ApiOperation({ summary: 'Xóa thành viên khỏi cuộc trò chuyện ' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Xóa thành viên khỏi cuộc trò chuyện ',
+  })
+  async removeMembersConversation(
+    @Request() req: RequestWithUser,
+    @Query() param: DetailConversation,
+    @Body() body: RemoveMemberConversationDto,
+  ) {
+    const data: any =
+      await this.conversationGroupService.removeMembersConversation(
+        param.conversation_id,
+        req.user._id,
+        body,
+      );
+    return data;
+  }
+
+  @Get('member')
+  @ApiOperation({ summary: 'Xóa thành viên khỏi cuộc trò chuyện ' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Xóa thành viên khỏi cuộc trò chuyện ',
+  })
+  async getMembersConversation(
+    @Request() req: RequestWithUser,
+    @Query() param: DetailConversation,
+  ) {
+    const data: any =
+      await this.conversationGroupService.getMembersConversation(
+        param.conversation_id,
+        req.user._id,
       );
     return data;
   }

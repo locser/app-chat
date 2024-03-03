@@ -25,6 +25,8 @@ import { CreateConversationDto } from './dto/create-conversation.dto';
 import { DetailConversation } from './dto/detail-conversation.dto';
 import { DetailConversationResponse } from './response/detail-conversation.response';
 import { QueryConversation } from './response/query-conversation.dto';
+import { LastMessageResponse } from './response/last-message.interface';
+import { UserMessageResponse } from 'src/connection/response/user-message.response';
 
 @Injectable()
 export class ConversationService {
@@ -239,9 +241,12 @@ export class ConversationService {
   }
 
   async getListLastMessageConversation(list_message_id): Promise<Message[]> {
-    return await this.messageModel.find({
-      _id: { $in: list_message_id },
-    });
+    return await this.messageModel
+      .find({
+        _id: { $in: list_message_id },
+      })
+      .populate('user_id', { _id: 1, username: 1, avatar: 1, full_name: 1 })
+      .lean();
   }
 
   async getListConversation(user_id: string, query_param: QueryConversation) {
@@ -290,27 +295,36 @@ export class ConversationService {
 
       // get member info
 
-      const listMember: { [user_id: string]: User } = await this.userModel
-        .find(
-          { _id: { $in: listUserIds } },
-          { _id: true, full_name: true, avatar: true, status: true },
-        )
-        .then((data) => {
-          return data.reduce((map, current) => {
-            map[current._id.toString()] = current;
-            return map;
-          }, {});
-        });
+      const listMember: { [user_id: string]: UserMessageResponse } =
+        await this.userModel
+          .find(
+            { _id: { $in: listUserIds } },
+            { _id: true, full_name: true, avatar: true, status: true },
+          )
+          .then((data) => {
+            return data.reduce((map, current) => {
+              map[current._id.toString()] = {
+                _id: current._id.toString(),
+                avatar: current.avatar,
+                full_name: current.full_name,
+              };
+              return map;
+            }, {});
+          });
 
       // get last message info
 
       const listMessage = await this.getListLastMessageConversation(
         listMessageIds,
       ).then((data) => {
-        return data.reduce((map, current: any) => {
-          const message: any = current.toObject();
-          map[current._id.toString()] = {
+        return data.reduce((map, message: any) => {
+          console.log(
+            'ConversationService ~ returndata.reduce ~ message:',
+            message,
+          );
+          map[message._id.toString()] = {
             ...message,
+            user: new UserMessageResponse(message.user_id),
             updated_at: formatUnixTimestamp(message.updated_at),
             created_at: formatUnixTimestamp(message.created_at),
           };
@@ -348,7 +362,10 @@ export class ConversationService {
           created_at: formatUnixTimestamp(item.created_at),
           updated_at: formatUnixTimestamp(item.updated_at),
           last_activity: formatUnixTimestamp(item.last_activity),
-          last_message: { ...listMessage[item.last_message_id] },
+          last_message: new LastMessageResponse({
+            ...listMessage[item.last_message_id],
+            _id: listMessage[item.last_message_id]._id.toString(),
+          }),
         };
       });
 

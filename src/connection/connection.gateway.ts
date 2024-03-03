@@ -594,10 +594,10 @@ export class ConnectionGateway
 
     new_message.updated_at = formatUnixTimestamp(new_message.updated_at);
     new_message.created_at = formatUnixTimestamp(new_message.created_at);
+    new_message.user = new UserMessageResponse(user);
+    new_message.conversation = conversation;
 
     this.server.to(to).emit(emit_socket, {
-      user: new UserMessageResponse(user),
-      conversation: conversation,
       message: new_message,
     });
   }
