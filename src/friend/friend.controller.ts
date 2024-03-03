@@ -1,22 +1,17 @@
 import {
-  Body,
   Controller,
   Get,
   HttpStatus,
-  Param,
   Post,
   Query,
   Request,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { RequestWithUser } from 'src/shared/requests.type';
 import { BaseResponse } from 'src/shared/base-response.response';
-import { FriendWithParamDto } from './dto/friend-with-param.dto';
+import { RequestWithUser } from 'src/shared/requests.type';
 import { FriendWithQueryDto } from './dto/friend-with-query.dto';
 import { RequestFriendWithParamDto } from './dto/request-friend-with-param.dto';
-import { ContactResponseSwagger, SyncFriendDto } from './dto/sync-friend.dto';
 import { FriendService } from './friend.service';
-import { CountFriendRequestsResponseSwagger } from './response/count-friend-requests.response';
 import { FriendResponse } from './response/friend.response';
 
 @Controller('friend')

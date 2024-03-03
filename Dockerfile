@@ -23,6 +23,10 @@ COPY package*.json ./
 COPY tsconfig.json ./
 
 ENV PORT=3000
+ENV JWT_SECRET=LOCSER
+ENV MONGODB_HOST=mongodb://127.0.0.1:27017/
+ENV MONGODB_DBNAME=app-chat
+ENV MONGODB_OPTIONS=?retryWrites=true&w=majority
 
 RUN npm install
 COPY --from=builder /app/dist ./dist

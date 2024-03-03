@@ -72,11 +72,10 @@ export class ConnectionService {
     const newMessage = await this.validateMessage(user_id, type, data);
 
     await this.conversationModel.updateOne(
-      {
-        _id: conversation._id,
-      },
+      { _id: conversation._id },
       {
         last_message_id: newMessage._id.toString(),
+        last_activity: +moment(),
       },
     );
 
@@ -103,7 +102,7 @@ export class ConnectionService {
   ): Promise<Conversation> {
     const conversation = await this.conversationModel
       .findOne({
-        _id: conversation_id,
+        _id: new Types.ObjectId(conversation_id),
         status: CONVERSATION_STATUS.ACTIVE,
       })
       .lean();

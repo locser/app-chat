@@ -1,13 +1,12 @@
-import { BaseModel } from './base-model.entity';
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import * as moment from 'moment';
+import { Types } from 'mongoose';
+import { BOOLEAN } from 'src/enum/common.enum';
 import {
   CONVERSATION_STATUS,
   CONVERSATION_TYPE,
 } from 'src/enum/conversation.enum';
-import { BOOLEAN } from 'src/enum/common.enum';
-import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Types } from 'mongoose';
-import { Timestamp } from 'mongodb';
-import * as moment from 'moment';
+import { BaseModel } from './base-model.entity';
 
 @Schema({
   timestamps: {
@@ -93,7 +92,6 @@ export class Conversation extends BaseModel {
   last_message_id: string;
 
   @Prop({
-    type: Timestamp,
     nullable: true,
     default: +moment(),
   })

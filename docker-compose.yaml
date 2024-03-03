@@ -4,8 +4,8 @@
 version: '3.8'
 services:
   # app service for your backend
-  app:
-    container_name: app-chat
+  backend:
+    container_name: chat-vai-dan
     build:
       context: ./
       dockerfile: Dockerfile

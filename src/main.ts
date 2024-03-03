@@ -7,11 +7,14 @@ import { ConversationModule } from './conversation/conversation.module';
 import { FriendModule } from './friend/friend.module';
 import { MessageModule } from './message/message.module';
 import { UserModule } from './user/user.module';
+import * as morgan from 'morgan';
+import { ConversationGroupController } from './conversation-group/conversation-group.controller';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
   app.enableCors();
+  app.use(morgan('dev'));
 
   const config = new DocumentBuilder()
     .setTitle('Service Message ' + process.env.CONFIG_PRODUCTION_MODE)
@@ -26,6 +29,7 @@ async function bootstrap() {
       ConversationModule,
       FriendModule,
       AuthModule,
+      ConversationGroupController,
     ],
     deepScanRoutes: true,
   });

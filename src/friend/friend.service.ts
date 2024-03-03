@@ -286,28 +286,32 @@ export class FriendService {
       const friendList = await this.friendModel
         .find({
           user_id: currentUserId,
-          type: type,
+          ...(type == 0
+            ? {
+                type: {
+                  $in: [FRIEND_TYPE.WAITING_CONFIRM, FRIEND_TYPE.FRIEND],
+                },
+              }
+            : { type: type }),
         })
         .populate({
           path: 'user_friend_id',
-          select:
-            'user_id full_name avatar nick_name address phone gender status created_at', // Chọn các trường bạn muốn hiển thị
+          select: 'user_id full_name avatar nick_name', // Chọn các trường bạn muốn hiển thị
         })
-        .select('_id created_at updated_at user_friend_id')
+        .select('_id type created_at updated_at user_friend_id')
         .sort({ created_at: 'desc' })
         .skip((page - 1) * limit)
         .limit(limit)
         .lean();
 
-      const list = friendList.map((data) => {
-        // const friend: any = data?.user_friend_id;
-
-        return new FriendResponse({
-          user_id: data?.user_friend_id._id || '',
-          ...data?.user_friend_id,
-          contact_type: type,
-        });
-      });
+      const list = friendList.map(
+        (data) =>
+          new FriendResponse({
+            user_id: data?.user_friend_id._id || '',
+            ...data?.user_friend_id,
+            contact_type: data.type,
+          }),
+      );
 
       return new BaseResponse(200, 'OK', list);
     } catch (error) {
