@@ -9,12 +9,14 @@ import { MessageModule } from './message/message.module';
 import { UserModule } from './user/user.module';
 import * as morgan from 'morgan';
 import { ConversationGroupController } from './conversation-group/conversation-group.controller';
+import { ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
   app.enableCors();
   app.use(morgan('dev'));
+  app.useGlobalPipes(new ValidationPipe());
 
   const config = new DocumentBuilder()
     .setTitle('Service Message ' + process.env.CONFIG_PRODUCTION_MODE)
