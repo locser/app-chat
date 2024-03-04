@@ -250,7 +250,7 @@ export class ConversationService {
   }
 
   async getListConversation(user_id: string, query_param: QueryConversation) {
-    const { limit, position } = query_param;
+    const { limit = 20, position } = query_param;
 
     try {
       const listConversationHidden =
@@ -267,7 +267,7 @@ export class ConversationService {
         _id: { $nin: listConversationHiddenIds },
       };
 
-      if (position) {
+      if (position?.length) {
         query['updated_at'] = { $lt: position };
       }
 
@@ -318,10 +318,6 @@ export class ConversationService {
         listMessageIds,
       ).then((data) => {
         return data.reduce((map, message: any) => {
-          console.log(
-            'ConversationService ~ returndata.reduce ~ message:',
-            message,
-          );
           map[message._id.toString()] = {
             ...message,
             user: new UserMessageResponse(message.user_id),
