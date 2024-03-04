@@ -24,7 +24,7 @@ export class MessageService {
     conversation_id: string,
     query: GetAllMessagesDto,
   ) {
-    const { limit, position } = query;
+    const { limit = 20, position } = query;
     try {
       const conversation = await this.checkConversationValid(conversation_id);
 
