@@ -20,6 +20,22 @@ import { checkMongoId } from 'src/util';
 
 @Injectable()
 export class ConnectionService {
+  handleReactionMessage(
+    user_id: string,
+    data: any,
+  ):
+    | { message: any; conversation: any }
+    | PromiseLike<{ message: any; conversation: any }> {
+    throw new Error('Method not implemented.');
+  }
+  handleRevokeMessage(
+    user_id: string,
+    data: any,
+  ):
+    | { message: any; conversation: any }
+    | PromiseLike<{ message: any; conversation: any }> {
+    throw new Error('Method not implemented.');
+  }
   async validateUserTarget(target_user_id: string) {
     const validUserId = checkMongoId(target_user_id);
 

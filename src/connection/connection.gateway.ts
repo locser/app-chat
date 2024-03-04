@@ -354,6 +354,81 @@ export class ConnectionGateway
     }
   }
 
+  @SubscribeMessage('revoke-message')
+  async handleRevokeMessage(
+    @ConnectedSocket() client: SocketWithUser,
+    @MessageBody() data: any,
+  ) {
+    try {
+      const hasAccess = await this.connectionService.beforeJoinRoom(
+        client.user._id,
+        data.conversation_id,
+      );
+
+      if (!hasAccess) {
+        throw new WsException('Bạn không có quyền truy cập!!');
+      }
+
+      const { message, conversation } =
+        await this.connectionService.handleRevokeMessage(client.user._id, data);
+
+      // const messageResponse = new MessageResponse();
+      this.emitSocketMessage(
+        client.user,
+        message,
+        conversation,
+        'revoke-message',
+      );
+    } catch (error) {
+      console.log('error:', error);
+      this.emitSocketError(
+        client.user._id.toString(),
+        'revoke-message',
+        error?.message || '',
+        error,
+      );
+    }
+  }
+
+  @SubscribeMessage('reaction-message')
+  async handleReactionMessage(
+    @ConnectedSocket() client: SocketWithUser,
+    @MessageBody() data: any,
+  ) {
+    try {
+      const hasAccess = await this.connectionService.beforeJoinRoom(
+        client.user._id,
+        data.conversation_id,
+      );
+
+      if (!hasAccess) {
+        throw new WsException('Bạn không có quyền truy cập!!');
+      }
+
+      const { message, conversation } =
+        await this.connectionService.handleReactionMessage(
+          client.user._id,
+          data,
+        );
+
+      // const messageResponse = new MessageResponse();
+      this.emitSocketMessage(
+        client.user,
+        message,
+        conversation,
+        'reaction-message',
+      );
+    } catch (error) {
+      console.log('error:', error);
+      this.emitSocketError(
+        client.user._id.toString(),
+        'reaction-message',
+        error?.message || '',
+        error,
+      );
+    }
+  }
+
   // @SubscribeMessage('message-text')
   // async handleMessageText(
   //   @ConnectedSocket() client: SocketWithUser,
