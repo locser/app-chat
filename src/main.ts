@@ -16,7 +16,17 @@ async function bootstrap() {
 
   app.enableCors();
   app.use(morgan('dev'));
-  app.useGlobalPipes(new ValidationPipe());
+  app.useGlobalPipes(
+    new ValidationPipe({
+      transform: true,
+      // whitelist: true,
+      stopAtFirstError: true,
+      enableDebugMessages: true,
+      transformOptions: {
+        enableImplicitConversion: true,
+      },
+    }),
+  );
 
   const config = new DocumentBuilder()
     .setTitle('Service Message ' + process.env.CONFIG_PRODUCTION_MODE)

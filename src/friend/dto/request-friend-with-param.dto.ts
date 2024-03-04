@@ -4,11 +4,11 @@ import { IsString } from 'class-validator';
 export class RequestFriendWithParamDto {
   @ApiProperty({
     type: String,
-    example: 99453,
+    example: '60f3e3e3e3e3e3e3e3e3e3e3',
     description: 'id của người nhận yêu cầu',
   })
   @IsString({
-    message: '$property phải là số nguyên dương',
+    message: '$property không đúng định dạng',
   })
   _id: string;
 }

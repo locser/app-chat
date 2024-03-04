@@ -300,8 +300,8 @@ export class FriendService {
         })
         .select('_id type created_at updated_at user_friend_id')
         .sort({ created_at: 'desc' })
-        .skip((page - 1) * limit)
-        .limit(limit)
+        .skip((+page - 1) * +limit)
+        .limit(+limit)
         .lean();
 
       const list = friendList.map(
