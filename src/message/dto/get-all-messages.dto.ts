@@ -1,16 +1,8 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import {
-  IsIn,
-  IsNotEmpty,
-  IsNumber,
-  IsNumberString,
-  IsOptional,
-  ValidateIf,
-} from 'class-validator';
+import { ApiPropertyOptional } from '@nestjs/swagger';
+import { IsNotEmpty, IsNumber, IsOptional, ValidateIf } from 'class-validator';
 
 export class GetAllMessagesDto {
   @IsOptional()
-  @IsNumber()
   @ApiPropertyOptional({
     type: Number,
     description: 'Gioi han message text',

@@ -1,10 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import {
-  IsNotEmpty,
-  IsPhoneNumber,
-  MaxLength,
-  MinLength,
-} from 'class-validator';
+import { IsNotEmpty, Length, MaxLength, MinLength } from 'class-validator';
 export class SignUpDto {
   @ApiProperty({
     type: String,
@@ -21,8 +16,7 @@ export class SignUpDto {
   nick_name: string;
 
   @IsNotEmpty()
-  @MaxLength(10)
-  @IsPhoneNumber('VN', { message: 'So dien thoai bao gom 10 so' })
+  @Length(10, 10, { message: 'Phone gồm 10 số' })
   @ApiProperty({
     type: String,
     description: 'Số điện thoại đăng nhập',

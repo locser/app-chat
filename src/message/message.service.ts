@@ -5,6 +5,7 @@ import { Conversation, ExceptionResponse, Message, User } from 'src/shared';
 import { GetAllMessagesDto } from './dto/get-all-messages.dto';
 import { CONVERSATION_STATUS } from 'src/enum';
 import { formatUnixTimestamp } from 'src/util';
+import { ListMessageResponse } from './response/list-message.response';
 
 @Injectable()
 export class MessageService {
@@ -53,20 +54,21 @@ export class MessageService {
       // get user target, get reaction, get tag_user
 
       return messageList.map((item) => {
-        return {
-          user: item.user_id,
-          _id: item._id,
-          conversation_id: item.conversation_id,
-          user_target: item.user_target,
-          message: item.message,
-          no_of_reaction: item.no_of_reaction,
-          type: item.type,
-          status: item.status,
-          user_tag: item.user_tag,
-          reaction: item.reaction,
-          created_at: formatUnixTimestamp(item.created_at),
-          updated_at: formatUnixTimestamp(item.updated_at),
-        };
+        return new ListMessageResponse({
+          user: item?.user_id,
+          _id: item?._id,
+          conversation_id: item?.conversation_id,
+          user_target: item?.user_target,
+          message: item?.message,
+          media: item?.media,
+          no_of_reaction: item?.no_of_reaction,
+          type: item?.type,
+          status: item?.status,
+          user_tag: item?.user_tag,
+          reaction: item?.reaction,
+          created_at: formatUnixTimestamp(item?.created_at),
+          updated_at: formatUnixTimestamp(item?.updated_at),
+        });
       });
     } catch (error) {
       console.log('MessageService ~ error:', error);
