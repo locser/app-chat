@@ -83,6 +83,7 @@ import {
         name: Sticker.name,
         schema: StickerSchema,
       },
+
       {
         name: Message.name,
         schema: MessageSchema,

@@ -13,6 +13,7 @@ export class AuthController {
   @Public()
   @Post('sign-in')
   async signIn(@Body() body: LoginDto) {
+    console.log('AuthController ~ signIn ~ body:', body);
     const data = await this.authService.signIn(body);
     return data;
   }

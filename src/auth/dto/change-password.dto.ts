@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, Max, Min } from 'class-validator';
+import { IsNotEmpty, MaxLength, MinLength } from 'class-validator';
 
 export class ChangePasswordDto {
   @IsNotEmpty()
@@ -7,15 +7,16 @@ export class ChangePasswordDto {
     type: String,
     description: 'Mật khẩu cũ',
   })
-  @Min(8)
-  @Max(15)
+  @MinLength(8)
+  @MaxLength(15)
   old_password: string;
+
   @IsNotEmpty()
   @ApiProperty({
     type: String,
     description: 'Mật khẩu mới',
   })
-  @Min(8)
-  @Max(15)
+  @MinLength(8)
+  @MaxLength(15)
   new_password: string;
 }

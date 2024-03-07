@@ -68,6 +68,7 @@ export class MessageService {
           reaction: item?.reaction,
           created_at: formatUnixTimestamp(item?.created_at),
           updated_at: formatUnixTimestamp(item?.updated_at),
+          position: item?.created_at.toString(),
         });
       });
     } catch (error) {
