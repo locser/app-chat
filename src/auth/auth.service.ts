@@ -10,6 +10,7 @@ import { LoginDto } from './dto/user-sign-in.dto';
 import { SignUpDto } from './dto/user-sign-up.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { UserProfileResponse } from 'src/user/response/user-profile.response';
+import * as moment from 'moment';
 
 @Injectable()
 export class AuthService {
@@ -20,35 +21,40 @@ export class AuthService {
   ) {}
 
   async signIn(body: LoginDto) {
-    const hasUser = await this.getAuthenticatedUser(
-      {
-        phone: body.phone,
-        status: USER_STATUS.ACTIVE,
-      },
-      body.password,
-    );
+    try {
+      console.log('AuthService ~ signIn ~ body:', body);
+      const hasUser = await this.getAuthenticatedUser(
+        {
+          phone: body.phone,
+          status: USER_STATUS.ACTIVE,
+        },
+        body.password,
+      );
 
-    const payload = {
-      _id: hasUser._id.toString(),
-      role: hasUser.role,
-      full_name: hasUser.full_name,
-      avatar: hasUser.avatar,
-    };
+      const payload = {
+        _id: hasUser._id.toString(),
+        role: hasUser.role,
+        full_name: hasUser.full_name,
+        avatar: hasUser.avatar,
+      };
 
-    const access_token = await this.jwtService.signAsync(payload, {
-      secret: process.env.JWT_SECRET,
-    });
+      const access_token = await this.jwtService.signAsync(payload, {
+        secret: process.env.JWT_SECRET,
+      });
 
-    await this.userModel.updateOne(
-      { _id: new Types.ObjectId(hasUser._id) },
-      { access_token: access_token },
-    );
+      await this.userModel.updateOne(
+        { _id: new Types.ObjectId(hasUser._id) },
+        { access_token: access_token, last_connect: +moment() },
+      );
 
-    return new BaseResponse(200, 'OK', {
-      _id: hasUser._id,
-      full_name: hasUser.full_name,
-      access_token: access_token,
-    });
+      return new BaseResponse(200, 'OK', {
+        _id: hasUser._id,
+        full_name: hasUser.full_name,
+        access_token: access_token,
+      });
+    } catch (error) {
+      console.log('AuthService ~ signIn ~ error:', error);
+    }
   }
 
   async getAuthenticatedUser1(phone: string, password: string): Promise<User> {
@@ -150,7 +156,7 @@ export class AuthService {
       if (!user) {
         throw new ExceptionResponse(
           404,
-          'Không tìm thấy user với số điện thoại này',
+          `Không tìm thấy user với số điện thoại này ${filter['phone']}`,
         );
       }
       // check password

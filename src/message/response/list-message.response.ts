@@ -13,9 +13,11 @@ export class ListMessageResponse {
   user_tag: any;
   created_at: string;
   updated_at: string;
+  position: string;
 
   constructor(data: any) {
     this._id = data?._id || '';
+    this.user = new UserMessageResponse(data?.user);
     this.conversation_id = data?.conversation_id || '';
     this.user_target = data?.user_target || [];
     this.message = data?.message || '';
@@ -26,5 +28,6 @@ export class ListMessageResponse {
     this.user_tag = data?.user_tag || [];
     this.created_at = data?.created_at || '';
     this.updated_at = data?.updated_at || '';
+    this.position = data?.position || '';
   }
 }

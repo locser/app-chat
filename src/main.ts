@@ -21,7 +21,7 @@ async function bootstrap() {
       transform: true,
       // whitelist: true,
       stopAtFirstError: true,
-      enableDebugMessages: true,
+      // enableDebugMessages: true,
       transformOptions: {
         enableImplicitConversion: true,
       },

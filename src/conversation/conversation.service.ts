@@ -30,101 +30,113 @@ import { UserMessageResponse } from 'src/connection/response/user-message.respon
 
 @Injectable()
 export class ConversationService {
-  async updateBackgroundConversation(
-    conversation_id: string,
-    back_ground: string,
-    user_id: string,
-  ) {
+  async getListPinnedConversation(user_id: string) {
     try {
-      if (!back_ground)
-        throw new ExceptionResponse(400, 'Không thể đặt tên trống');
-      const conversation = await this.getOneConversation(conversation_id);
+      const listConversationPinned =
+        await this.getListConversationPinned(user_id);
 
-      if (!conversation?.members?.includes(user_id)) {
-        throw new ExceptionResponse(404, 'Không tìm thấy cuộc trò chuyện');
+      if (listConversationPinned.length == 0) {
+        return new BaseResponse(200, 'OK', []);
       }
 
-      conversation.background = back_ground;
+      const listConversationIds = listConversationPinned.map(
+        (item) => item.conversation_id,
+      );
 
-      conversation.save();
+      const conversations = await this.conversationModel
+        .find({
+          _id: { $in: listConversationIds },
+        })
+        .lean();
 
-      return new BaseResponse(200, 'OK', {
-        back_ground: conversation.background,
+      const listUserIds = [];
+      const listMessageIds = [];
+
+      conversations.map((item) => {
+        if (item.type == CONVERSATION_TYPE.PERSONAL)
+          listUserIds.push(...item.members);
+        listMessageIds.push(new Types.ObjectId(item.last_message_id));
+        listConversationIds.push(item._id.toString());
       });
+
+      // get member info
+
+      const listMember: { [user_id: string]: UserMessageResponse } =
+        await this.userModel
+          .find(
+            { _id: { $in: listUserIds } },
+            { _id: true, full_name: true, avatar: true, status: true },
+          )
+          .then((data) => {
+            return data.reduce((map, current) => {
+              map[current._id.toString()] = {
+                _id: current._id.toString(),
+                avatar: current.avatar,
+                full_name: current.full_name,
+              };
+              return map;
+            }, {});
+          });
+
+      // get last message info
+
+      const listMessage = await this.getListLastMessageConversation(
+        listMessageIds,
+      ).then((data) => {
+        return data.reduce((map, message: any) => {
+          map[message._id.toString()] = {
+            ...message,
+            user: new UserMessageResponse(message.user_id),
+            updated_at: formatUnixTimestamp(message.updated_at),
+            created_at: formatUnixTimestamp(message.created_at),
+          };
+          return map;
+        }, {});
+      });
+
+      const listConversationDisableNotify =
+        await this.getListConversationDisableNotify(user_id);
+
+      const data = conversations.map((item) => {
+        const id = item._id.toString();
+
+        if (item.type == CONVERSATION_TYPE.PERSONAL) {
+          const otherUserId = item.members.find((_id) => _id != user_id);
+
+          const otherUser = listMember[otherUserId];
+
+          item.avatar = otherUser?.avatar || '';
+          item.name = otherUser?.full_name || '';
+        }
+
+        return {
+          ...item,
+          _id: id,
+          is_notify: listConversationDisableNotify.find(
+            (temp) => temp.conversation_id == id,
+          )
+            ? 0
+            : 1,
+          is_pinned: 1,
+
+          created_at: formatUnixTimestamp(item.created_at),
+          updated_at: formatUnixTimestamp(item.updated_at),
+          last_activity: formatUnixTimestamp(item.last_activity),
+          last_message: new LastMessageResponse({
+            ...listMessage[item.last_message_id],
+            _id: listMessage[item.last_message_id]._id.toString(),
+          }),
+        };
+      });
+
+      return new BaseResponse(200, 'OK', data);
     } catch (error) {
       console.log(
-        'ConversationService ~ updateBackgroundConversation ~ error:',
+        'ConversationService ~ getListPinnedConversation ~ error:',
         error,
       );
-      return new BaseResponse(400, 'FAIL', error);
+      throw new ExceptionResponse(error.status, error.message, error);
     }
-  }
-
-  async settingConfirmMemberConversation(
-    conversation_id: string,
-    user_id: string,
-  ) {
-    try {
-      const conversation = await this.getOneConversation(conversation_id);
-
-      if (
-        !conversation?.members?.includes(user_id) ||
-        conversation.owner_id !== user_id
-      ) {
-        throw new ExceptionResponse(400, 'Không tìm thấy cuộc trò chuyện');
-      }
-
-      conversation.is_confirm_new_member = +!conversation.is_confirm_new_member;
-
-      conversation.save();
-
-      return new BaseResponse(200, 'OK');
-    } catch (error) {
-      console.log(
-        'ConversationService ~ settingConfirmMemberConversation ~ error:',
-        error,
-      );
-      return new BaseResponse(400, 'FAIL', error);
-    }
-  }
-  async updateNameConversation(
-    conversation_id: string,
-    name: string,
-    user_id: string,
-  ) {
-    try {
-      if (!name) throw new ExceptionResponse(400, 'Không thể đặt tên trống');
-      const conversation = await this.getOneConversation(conversation_id);
-
-      if (
-        !conversation?.members?.includes(user_id) ||
-        conversation.type !== CONVERSATION_TYPE.GROUP
-      ) {
-        throw new ExceptionResponse(404, 'Không tìm thấy cuộc trò chuyện');
-      }
-
-      conversation.name = name;
-
-      conversation.save();
-
-      return new BaseResponse(200, 'OK', { name: conversation.name });
-    } catch (error) {
-      console.log(
-        'ConversationService ~ updateNameConversation ~ error:',
-        error,
-      );
-      return new BaseResponse(400, 'FAIL', error);
-    }
-  }
-
-  private async getOneConversation(conversation_id: string) {
-    if (!checkMongoId(conversation_id)) {
-      throw new ExceptionResponse(400, 'Conversation_id không hợp lệ');
-    }
-
-    return await this.conversationModel.findById({
-      _id: new Types.ObjectId(conversation_id),
-    });
   }
 
   constructor(
@@ -288,7 +300,8 @@ export class ConversationService {
       const listConversationIds = [];
 
       conversations.map((item) => {
-        listUserIds.push(...item.members);
+        if (item.type == CONVERSATION_TYPE.PERSONAL)
+          listUserIds.push(...item.members);
         listMessageIds.push(new Types.ObjectId(item.last_message_id));
         listConversationIds.push(item._id.toString());
       });
@@ -343,8 +356,8 @@ export class ConversationService {
 
           const otherUser = listMember[otherUserId];
 
-          item.avatar = otherUser.avatar;
-          item.name = otherUser.full_name;
+          item.avatar = otherUser?.avatar || '';
+          item.name = otherUser?.full_name || '';
         }
 
         return {
@@ -355,6 +368,7 @@ export class ConversationService {
           )
             ? 0
             : 1,
+          is_pinned: 0,
           created_at: formatUnixTimestamp(item.created_at),
           updated_at: formatUnixTimestamp(item.updated_at),
           last_activity: formatUnixTimestamp(item.last_activity),
@@ -527,5 +541,102 @@ export class ConversationService {
       console.log('ConversationService ~ pinConversation ~ error:', error);
       throw new ExceptionResponse(400, 'FAILED', error);
     }
+  }
+
+  async updateBackgroundConversation(
+    conversation_id: string,
+    back_ground: string,
+    user_id: string,
+  ) {
+    try {
+      if (!back_ground)
+        throw new ExceptionResponse(400, 'Không thể đặt tên trống');
+      const conversation = await this.getOneConversation(conversation_id);
+
+      if (!conversation?.members?.includes(user_id)) {
+        throw new ExceptionResponse(404, 'Không tìm thấy cuộc trò chuyện');
+      }
+
+      conversation.background = back_ground;
+
+      conversation.save();
+
+      return new BaseResponse(200, 'OK', {
+        back_ground: conversation.background,
+      });
+    } catch (error) {
+      console.log(
+        'ConversationService ~ updateBackgroundConversation ~ error:',
+        error,
+      );
+      return new BaseResponse(400, 'FAIL', error);
+    }
+  }
+
+  async settingConfirmMemberConversation(
+    conversation_id: string,
+    user_id: string,
+  ) {
+    try {
+      const conversation = await this.getOneConversation(conversation_id);
+
+      if (
+        !conversation?.members?.includes(user_id) ||
+        conversation.owner_id !== user_id
+      ) {
+        throw new ExceptionResponse(400, 'Không tìm thấy cuộc trò chuyện');
+      }
+
+      conversation.is_confirm_new_member = +!conversation.is_confirm_new_member;
+
+      conversation.save();
+
+      return new BaseResponse(200, 'OK');
+    } catch (error) {
+      console.log(
+        'ConversationService ~ settingConfirmMemberConversation ~ error:',
+        error,
+      );
+      return new BaseResponse(400, 'FAIL', error);
+    }
+  }
+  async updateNameConversation(
+    conversation_id: string,
+    name: string,
+    user_id: string,
+  ) {
+    try {
+      if (!name) throw new ExceptionResponse(400, 'Không thể đặt tên trống');
+      const conversation = await this.getOneConversation(conversation_id);
+
+      if (
+        !conversation?.members?.includes(user_id) ||
+        conversation.type !== CONVERSATION_TYPE.GROUP
+      ) {
+        throw new ExceptionResponse(404, 'Không tìm thấy cuộc trò chuyện');
+      }
+
+      conversation.name = name;
+
+      conversation.save();
+
+      return new BaseResponse(200, 'OK', { name: conversation.name });
+    } catch (error) {
+      console.log(
+        'ConversationService ~ updateNameConversation ~ error:',
+        error,
+      );
+      return new BaseResponse(400, 'FAIL', error);
+    }
+  }
+
+  private async getOneConversation(conversation_id: string) {
+    if (!checkMongoId(conversation_id)) {
+      throw new ExceptionResponse(400, 'Conversation_id không hợp lệ');
+    }
+
+    return await this.conversationModel.findById({
+      _id: new Types.ObjectId(conversation_id),
+    });
   }
 }
