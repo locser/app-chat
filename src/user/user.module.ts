@@ -18,6 +18,7 @@ import {
   User,
   UserSchema,
 } from 'src/shared';
+import { Friend, FriendSchema } from 'src/shared/friend.entity';
 
 @Module({
   imports: [
@@ -50,6 +51,10 @@ import {
       {
         name: Message.name,
         schema: MessageSchema,
+      },
+      {
+        name: Friend.name,
+        schema: FriendSchema,
       },
     ]),
   ],

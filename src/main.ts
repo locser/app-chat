@@ -29,9 +29,9 @@ async function bootstrap() {
   );
 
   const config = new DocumentBuilder()
-    .setTitle('Service Message ' + process.env.CONFIG_PRODUCTION_MODE)
-    .setDescription(`The Message Service V1 API description`)
-    .setVersion('0.0.11')
+    .setTitle('Service ' + process.env.CONFIG_PRODUCTION_MODE)
+    .setDescription(`The API description`)
+    .setVersion('0.0.1')
     .addBearerAuth()
     .build();
   const document = SwaggerModule.createDocument(app, config, {

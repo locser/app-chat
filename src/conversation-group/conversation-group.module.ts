@@ -14,6 +14,7 @@ import {
   Message,
   MessageSchema,
 } from 'src/shared';
+import { Friend, FriendSchema } from 'src/shared/friend.entity';
 
 @Module({
   controllers: [ConversationGroupController],
@@ -43,6 +44,10 @@ import {
       {
         name: Message.name,
         schema: MessageSchema,
+      },
+      {
+        name: Friend.name,
+        schema: FriendSchema,
       },
     ]),
   ],

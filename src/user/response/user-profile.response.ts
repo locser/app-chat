@@ -67,7 +67,9 @@ export class UserProfileResponse {
   })
   _id: Types.ObjectId;
 
-  constructor(user: Partial<User>) {
+  contact_type: number;
+
+  constructor(user: any) {
     this._id = user?._id || new Types.ObjectId();
     this.avatar = user?.avatar || '';
     this.full_name = user?.full_name || '';
@@ -85,5 +87,6 @@ export class UserProfileResponse {
       moment().format('DD/MM/YYYY');
     this.status = user?.status || USER_STATUS.ACTIVE;
     this.role = user?.role || Role.User;
+    this.contact_type = user?.contact_type || 0;
   }
 }

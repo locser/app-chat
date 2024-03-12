@@ -5,23 +5,43 @@ import { ExceptionResponse, User } from 'src/shared';
 import { BaseResponse } from 'src/shared/base-response.response';
 import { RequestWithUser } from 'src/shared/requests.type';
 import { UserProfileResponse } from './response/user-profile.response';
+import { Friend } from 'src/shared/friend.entity';
 
 @Injectable()
 export class UserService {
   async findUserByPhone(user_id: string, phone: string) {
-    const user = await this.userModel.findOne({
-      phone: phone,
-    });
+    const user = await this.userModel
+      .findOne({
+        phone: phone,
+      })
+      .lean();
+    console.log('UserService ~ findUserByPhone ~ user:', user);
 
     if (!user) {
       throw new ExceptionResponse(404, 'Không tìm thấy user');
     }
 
-    return new BaseResponse(200, 'OK', { user: new UserProfileResponse(user) });
+    const contact_type = await this.friendModel
+      .findOne({
+        user_id: user_id,
+        user_friend_id: user._id.toString(),
+      })
+      .lean();
+
+    console.log('UserService ~ findUserByPhone ~ contact_type:', contact_type);
+
+    return new BaseResponse(200, 'OK', {
+      user: new UserProfileResponse({
+        ...user,
+        contact_type: contact_type?.type || 0,
+      }),
+    });
   }
   constructor(
     @InjectModel(User.name)
     private readonly userModel: Model<User>,
+    @InjectModel(Friend.name)
+    private readonly friendModel: Model<Friend>,
   ) {}
 
   async updateUser(req: RequestWithUser, body: Partial<User>) {

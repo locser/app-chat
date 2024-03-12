@@ -26,6 +26,7 @@ import {
   AddMemberConversationDto,
   RemoveMemberConversationDto,
 } from './dto/add-member-conversation.dto';
+import { Friend } from 'src/shared/friend.entity';
 
 @Injectable()
 export class ConversationGroupService {
@@ -39,14 +40,25 @@ export class ConversationGroupService {
         .sort({ permission: 'desc', created_at: 'desc' })
         .lean();
 
-      const response = listMember.map((item) => {
-        const user = item.user_id as unknown as User;
-        return {
-          ...user,
-          user_id: user._id,
-          permission: item.permission,
-        };
-      });
+      const response = await Promise.all(
+        listMember.map(async (item) => {
+          const user = item.user_id as unknown as User;
+          return {
+            ...user,
+            user_id: user._id,
+            permission: item.permission,
+            contact_type:
+              (
+                await this.friendModel
+                  .findOne({
+                    user_id: user_id,
+                    user_friend_id: user._id.toString(),
+                  })
+                  .lean()
+              )?.type || 0,
+          };
+        }),
+      );
 
       return new BaseResponse(200, 'OK', response);
     } catch (error) {
@@ -411,6 +423,9 @@ export class ConversationGroupService {
 
     @InjectModel(Message.name)
     private readonly messageModel: Model<Message>,
+
+    @InjectModel(Friend.name)
+    private readonly friendModel: Model<Friend>,
   ) {}
 
   async updatePermissionConversation(

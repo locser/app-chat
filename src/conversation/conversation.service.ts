@@ -269,7 +269,7 @@ export class ConversationService {
         await this.getListConversationHidden(user_id);
 
       const listConversationHiddenIds = listConversationHidden.map(
-        (item) => item._id,
+        (item) => new Types.ObjectId(item._id),
       );
 
       const query = {
@@ -382,35 +382,64 @@ export class ConversationService {
       return new BaseResponse(200, 'OK', data);
     } catch (error) {
       console.log('ConversationService ~ getListConversation ~ error:', error);
-      return new BaseResponse(400, 'FAIL', error);
+      return new BaseResponse(400, 'FAIL', []);
     }
   }
 
   async detailConversation(user_id: string, body: DetailConversation) {
-    const detail: any = await this.conversationModel.findById(
-      body.conversation_id,
-    );
+    try {
+      const conversation: Conversation = await this.conversationModel
+        .findById(body.conversation_id)
+        .lean();
 
-    const member = await this.conversationMemberModel
-      .find({ conversation_id: body.conversation_id })
-      .populate('user_id', 'avatar full_name _id')
-      .exec();
+      if (!conversation)
+        throw new ExceptionResponse(400, 'Không tìm thấy cuộc trò chuyện');
 
-    if (detail.type == 2) {
-      // const other = member.filter((item) => {
-      //   return item.user_id._id != user_id;
-      // });
-      // detail.name = other[0].user_id.full_name;
-      // detail.avatar = other[0].user_id.avatar;
+      const members: User[] = await this.userModel
+        .find(
+          {
+            _id: {
+              $in: conversation.members.map((item) => new Types.ObjectId(item)),
+            },
+          },
+          {
+            _id: true,
+            full_name: true,
+            avatar: true,
+          },
+        )
+        .lean();
+
+      if (conversation.type == 2) {
+        const other = members.find((item) => {
+          return item._id.toString() != user_id;
+        });
+
+        console.log('ConversationService ~ other ~ other:', other);
+
+        conversation.name = other?.full_name;
+        conversation.avatar = other?.avatar;
+      }
+      const result = {
+        ...conversation,
+        members: members,
+        // members: member.map((item) => {
+        //   return item.user_id;
+        // }),
+        created_at: formatUnixTimestamp(conversation.created_at),
+        updated_at: formatUnixTimestamp(conversation.updated_at),
+        last_activity: formatUnixTimestamp(conversation.last_activity),
+      };
+
+      return new BaseResponse(
+        200,
+        'OK',
+        new DetailConversationResponse(result),
+      );
+    } catch (error) {
+      console.log('ConversationService ~ detailConversation ~ error:', error);
+      return new BaseResponse(400, 'FAIL');
     }
-    const result = {
-      ...detail,
-      members: member.map((item) => {
-        return item.user_id;
-      }),
-    };
-
-    return new DetailConversationResponse(result);
   }
 
   async hiddenConversation(conversation_id: string, user_id: string) {
@@ -462,7 +491,7 @@ export class ConversationService {
         },
         {
           message_last_id: conversation.last_message_id,
-          message_pre_id: conversation.last_activity,
+          message_pre_id: conversation.last_message_id,
           updated_at: +moment(),
         },
       );
