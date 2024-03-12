@@ -1,9 +1,10 @@
-import { IsNumberString, IsOptional } from 'class-validator';
+import { IsOptional, Min } from 'class-validator';
 
 export class QueryConversation {
   @IsOptional()
-  @IsNumberString({}, { message: 'limit must be a number' })
-  limit: string;
+  @Min(5)
+  limit: number;
 
+  @IsOptional()
   position: string;
 }

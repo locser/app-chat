@@ -168,10 +168,10 @@ export class ConversationGroupController {
   }
 
   @Get('member')
-  @ApiOperation({ summary: 'Xóa thành viên khỏi cuộc trò chuyện ' })
+  @ApiOperation({ summary: 'Lấy thành viên cuộc trò chuyện ' })
   @ApiResponse({
     status: HttpStatus.OK,
-    description: 'Xóa thành viên khỏi cuộc trò chuyện ',
+    description: 'Lấy thành viên cuộc trò chuyện ',
   })
   async getMembersConversation(
     @Request() req: RequestWithUser,

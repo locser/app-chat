@@ -17,6 +17,7 @@ import { BaseModel } from './base-model.entity';
 export class ConversationMember extends BaseModel {
   @Prop({
     type: String,
+    ref: 'Conversation',
   })
   conversation_id: string;
 

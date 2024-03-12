@@ -21,9 +21,9 @@ export class DetailConversationResponse {
 
   my_permission: number;
 
-  avatar: any;
+  avatar: string;
 
-  background: any;
+  background: string;
 
   last_message: string;
 
@@ -40,26 +40,25 @@ export class DetailConversationResponse {
   last_connect: string;
 
   constructor(result?: any) {
-    const data = result._doc;
-    this.conversation_id = data?._id || '';
-    this.name = data?.name || '';
-    this.type = data?.type || 0;
-    this.is_pinned = +data?.is_pinned || 0;
-    this.is_notify = +data?.is_notify || 0;
-    this.is_hidden = +data?.is_hidden || 0;
-    this.is_confirm_new_member = +data?.is_confirm_new_member || 0;
-    this.no_of_member = data?.no_of_member || 0;
-    this.no_of_not_seen = +data?.no_of_not_seen || 0;
-    this.no_of_waiting_confirm = +data?.no_of_waiting_confirm || 0;
-    this.my_permission = data?.my_permission || 0;
-    this.avatar = data?.type == data?.avatar || '';
-    this.background = data?.background || '';
+    this.conversation_id = result?._id || '';
+    this.name = result?.name || '';
+    this.type = result?.type || 0;
+    this.is_pinned = +result?.is_pinned || 0;
+    this.is_notify = +result?.is_notify || 0;
+    this.is_hidden = +result?.is_hidden || 0;
+    this.is_confirm_new_member = +result?.is_confirm_new_member || 0;
+    this.no_of_member = result?.no_of_member || 0;
+    this.no_of_not_seen = +result?.no_of_not_seen || 0;
+    this.no_of_waiting_confirm = +result?.no_of_waiting_confirm || 0;
+    this.my_permission = result?.my_permission || 0;
+    this.avatar = result?.avatar || '';
+    this.background = result?.background || '';
 
     this.members = result?.members || [];
-    this.position = data?.last_activity || '';
-    this.created_at = data?.created_at || '';
-    this.updated_at = data?.updated_at || '';
-    this.last_activity = data?.last_activity || '';
-    this.last_connect = data?.last_connect || '';
+    this.position = result?.last_activity || '';
+    this.created_at = result?.created_at || '';
+    this.updated_at = result?.updated_at || '';
+    this.last_activity = result?.last_activity || '';
+    this.last_connect = result?.last_connect || '';
   }
 }
