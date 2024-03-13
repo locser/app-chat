@@ -30,115 +30,6 @@ import { UserMessageResponse } from 'src/connection/response/user-message.respon
 
 @Injectable()
 export class ConversationService {
-  async getListPinnedConversation(user_id: string) {
-    try {
-      const listConversationPinned =
-        await this.getListConversationPinned(user_id);
-
-      if (listConversationPinned.length == 0) {
-        return new BaseResponse(200, 'OK', []);
-      }
-
-      const listConversationIds = listConversationPinned.map(
-        (item) => item.conversation_id,
-      );
-
-      const conversations = await this.conversationModel
-        .find({
-          _id: { $in: listConversationIds },
-        })
-        .lean();
-
-      const listUserIds = [];
-      const listMessageIds = [];
-
-      conversations.map((item) => {
-        if (item.type == CONVERSATION_TYPE.PERSONAL)
-          listUserIds.push(...item.members);
-        listMessageIds.push(new Types.ObjectId(item.last_message_id));
-        listConversationIds.push(item._id.toString());
-      });
-
-      // get member info
-
-      const listMember: { [user_id: string]: UserMessageResponse } =
-        await this.userModel
-          .find(
-            { _id: { $in: listUserIds } },
-            { _id: true, full_name: true, avatar: true, status: true },
-          )
-          .then((data) => {
-            return data.reduce((map, current) => {
-              map[current._id.toString()] = {
-                _id: current._id.toString(),
-                avatar: current.avatar,
-                full_name: current.full_name,
-              };
-              return map;
-            }, {});
-          });
-
-      // get last message info
-
-      const listMessage = await this.getListLastMessageConversation(
-        listMessageIds,
-      ).then((data) => {
-        return data.reduce((map, message: any) => {
-          map[message._id.toString()] = {
-            ...message,
-            user: new UserMessageResponse(message.user_id),
-            updated_at: formatUnixTimestamp(message.updated_at),
-            created_at: formatUnixTimestamp(message.created_at),
-          };
-          return map;
-        }, {});
-      });
-
-      const listConversationDisableNotify =
-        await this.getListConversationDisableNotify(user_id);
-
-      const data = conversations.map((item) => {
-        const id = item._id.toString();
-
-        if (item.type == CONVERSATION_TYPE.PERSONAL) {
-          const otherUserId = item.members.find((_id) => _id != user_id);
-
-          const otherUser = listMember[otherUserId];
-
-          item.avatar = otherUser?.avatar || '';
-          item.name = otherUser?.full_name || '';
-        }
-
-        return {
-          ...item,
-          _id: id,
-          is_notify: listConversationDisableNotify.find(
-            (temp) => temp.conversation_id == id,
-          )
-            ? 0
-            : 1,
-          is_pinned: 1,
-
-          created_at: formatUnixTimestamp(item.created_at),
-          updated_at: formatUnixTimestamp(item.updated_at),
-          last_activity: formatUnixTimestamp(item.last_activity),
-          last_message: new LastMessageResponse({
-            ...listMessage[item.last_message_id],
-            _id: listMessage[item.last_message_id]._id.toString(),
-          }),
-        };
-      });
-
-      return new BaseResponse(200, 'OK', data);
-    } catch (error) {
-      console.log(
-        'ConversationService ~ getListPinnedConversation ~ error:',
-        error,
-      );
-      throw new ExceptionResponse(error.status, error.message, error);
-    }
-  }
-
   constructor(
     @InjectModel(User.name)
     private readonly userModel: Model<User>,
@@ -259,6 +150,203 @@ export class ConversationService {
       })
       .populate('user_id', { _id: 1, username: 1, avatar: 1, full_name: 1 })
       .lean();
+  }
+
+  async getListConversation1(user_id: string, query_param: QueryConversation) {
+    const { limit = 20 } = query_param;
+    console.log(
+      'ConversationService ~ getListConversation1 ~ user_id:',
+      user_id,
+    );
+
+    try {
+      const conversations = await this.conversationModel
+        .aggregate<Conversation>([
+          // { $project: { conversationStrId: { $toString: '$_id' } } },
+          {
+            $lookup: {
+              from: ConversationMember.name,
+              let: {
+                conversationId: '$conversation_id',
+                last_activity: '$last_activity',
+              }, // Define the variable here
+              // localField: '_id',
+              // foreignField: 'conversation_id',
+              pipeline: [
+                {
+                  $addFields: { conversation_id: { $toString: '$_id' } },
+                  // $addFields: { conversation_id: { $toString: '$_id' } },
+                },
+                {
+                  $match: {
+                    $expr: {
+                      $and: [
+                        {
+                          $eq: [
+                            '$conversation_member.conversation_id',
+                            '$$conversationId',
+                          ],
+                        },
+                        {
+                          $lt: [
+                            '$conversation_member.message_pre_id',
+                            '$$last_activity',
+                          ],
+                        },
+                      ],
+                    },
+                  },
+                },
+              ],
+              as: 'conversation_member',
+            },
+          },
+          {
+            $match: {
+              members: { $in: [user_id] },
+              last_message_id: { $ne: '' },
+              status: CONVERSATION_STATUS.ACTIVE,
+              // 'conversation_member.user_id': user_id,
+              // $expr: {
+              //   $gt: ['$last_activity', '$conversation_member.message_pre_id'],
+              // },
+            },
+          },
+        ])
+        .project({
+          __v: false,
+        })
+        .limit(+limit)
+        .sort({ updated_at: 'desc' })
+        .exec(); // Fix: Use exec() instead of toArray()
+
+      const conversationMember = await this.conversationMemberModel
+        .find({
+          user_id: user_id,
+        })
+        .lean();
+
+      const mapConversationMember = conversationMember.reduce(
+        (map, current) => {
+          map[current.conversation_id] = current.updated_at;
+          return map;
+        },
+        {},
+      );
+
+      console.log(
+        'ConversationService ~ getListConversation1 ~ mapConversationMember:',
+        conversations,
+      );
+
+      const listConversation = conversations.map((item) => {
+        if (item.last_activity <= mapConversationMember[item._id.toString()]) {
+          console.log('thawfng nay no xoa cuoc tro chuyen roi ne', item._id);
+        }
+
+        return item;
+      });
+
+      console.log(
+        'ConversationService ~ getListConversation1 ~ conversations:',
+        listConversation,
+      );
+
+      return listConversation;
+
+      if (conversations.length == 0) {
+        return new BaseResponse(200, 'OK', []);
+      }
+
+      const listUserIds = [];
+      const listMessageIds = [];
+      const listConversationIds = [];
+
+      conversations.map((item) => {
+        if (item.type == CONVERSATION_TYPE.PERSONAL)
+          listUserIds.push(...item.members);
+        listMessageIds.push(new Types.ObjectId(item.last_message_id));
+        listConversationIds.push(item._id.toString());
+      });
+
+      // get member info
+
+      const listMember: { [user_id: string]: UserMessageResponse } =
+        await this.userModel
+          .find(
+            { _id: { $in: listUserIds } },
+            { _id: true, full_name: true, avatar: true, status: true },
+          )
+          .then((data) => {
+            return data.reduce((map, current) => {
+              map[current._id.toString()] = {
+                _id: current._id.toString(),
+                avatar: current.avatar,
+                full_name: current.full_name,
+              };
+              return map;
+            }, {});
+          });
+
+      // get last message info
+
+      const listMessage = await this.getListLastMessageConversation(
+        listMessageIds,
+      ).then((data) => {
+        return data.reduce((map, message: any) => {
+          map[message._id.toString()] = {
+            ...message,
+            user: new UserMessageResponse(message.user_id),
+            updated_at: formatUnixTimestamp(message.updated_at),
+            created_at: formatUnixTimestamp(message.created_at),
+          };
+          return map;
+        }, {});
+      });
+
+      // get setting, pinned, notify, hidden
+      // const listConversationPinned =
+      //   await this.getListConversationPinned(user_id);
+
+      const listConversationDisableNotify =
+        await this.getListConversationDisableNotify(user_id);
+
+      const data = conversations.map((item) => {
+        const id = item._id.toString();
+
+        if (item.type == CONVERSATION_TYPE.PERSONAL) {
+          const otherUserId = item.members.find((_id) => _id != user_id);
+
+          const otherUser = listMember[otherUserId];
+
+          item.avatar = otherUser?.avatar || '';
+          item.name = otherUser?.full_name || '';
+        }
+
+        return {
+          ...item,
+          _id: id,
+          is_notify: listConversationDisableNotify.find(
+            (temp) => temp.conversation_id == id,
+          )
+            ? 0
+            : 1,
+          is_pinned: 0,
+          created_at: formatUnixTimestamp(item.created_at),
+          updated_at: formatUnixTimestamp(item.updated_at),
+          last_activity: formatUnixTimestamp(item.last_activity),
+          last_message: new LastMessageResponse({
+            ...listMessage[item.last_message_id],
+            _id: listMessage[item.last_message_id]._id.toString(),
+          }),
+        };
+      });
+
+      return new BaseResponse(200, 'OK', data);
+    } catch (error) {
+      console.log('ConversationService ~ getListConversation ~ error:', error);
+      return new BaseResponse(400, 'FAIL', []);
+    }
   }
 
   async getListConversation(user_id: string, query_param: QueryConversation) {
@@ -410,42 +498,44 @@ export class ConversationService {
         )
         .lean();
 
-      const memberPermissions = await this.conversationMemberModel
-        .find({
+      const permission = await this.conversationMemberModel
+        .findOne({
           conversation_id: body.conversation_id,
+          user_id: user_id,
         })
         .lean();
 
-      const userPermissions = memberPermissions.reduce((map, current) => {
-        map[current.user_id] = current?.permission || 0;
-        return map;
-      }, {});
+      // const memberPermissions = await this.conversationMemberModel
+      //   .find({
+      //     conversation_id: body.conversation_id,
+      //   })
+      //   .lean();
 
-      console.log(
-        'ConversationService ~ detailConversation ~ userPermissions:',
-        userPermissions,
-      );
+      // const userPermissions = memberPermissions.reduce((map, current) => {
+      //   map[current.user_id] = current?.permission || 0;
+      //   return map;
+      // }, {});
+
       if (conversation.type == 2) {
         const other = members.find((item) => {
           return item._id.toString() != user_id;
         });
-
-        console.log('ConversationService ~ other ~ other:', other);
 
         conversation.name = other?.full_name;
         conversation.avatar = other?.avatar;
       }
       const result = {
         ...conversation,
-        members: members.map((item) => {
-          return {
-            ...item,
-            _id: item._id.toString(),
-            permission: userPermissions[item._id.toString()] || 0,
-          };
-        }),
-        // members: member.map((item) => {
-        //   return item.user_id;
+        my_permission: permission?.permission || 0,
+        // members: members.map((item) => {
+        //   return {
+        //     ...item,
+        //     _id: item._id.toString(),
+        //     permission: userPermissions[item._id.toString()] || 0,
+        //   };
+        // }),
+        // members: members.map((item) => {
+        //   return item.user_id.toString();
         // }),
         created_at: formatUnixTimestamp(conversation.created_at),
         updated_at: formatUnixTimestamp(conversation.updated_at),
@@ -650,6 +740,7 @@ export class ConversationService {
       return new BaseResponse(400, 'FAIL', error);
     }
   }
+
   async updateNameConversation(
     conversation_id: string,
     name: string,
@@ -688,5 +779,114 @@ export class ConversationService {
     return await this.conversationModel.findById({
       _id: new Types.ObjectId(conversation_id),
     });
+  }
+
+  async getListPinnedConversation(user_id: string) {
+    try {
+      const listConversationPinned =
+        await this.getListConversationPinned(user_id);
+
+      if (listConversationPinned.length == 0) {
+        return new BaseResponse(200, 'OK', []);
+      }
+
+      const listConversationIds = listConversationPinned.map(
+        (item) => item.conversation_id,
+      );
+
+      const conversations = await this.conversationModel
+        .find({
+          _id: { $in: listConversationIds },
+        })
+        .lean();
+
+      const listUserIds = [];
+      const listMessageIds = [];
+
+      conversations.map((item) => {
+        if (item.type == CONVERSATION_TYPE.PERSONAL)
+          listUserIds.push(...item.members);
+        listMessageIds.push(new Types.ObjectId(item.last_message_id));
+        listConversationIds.push(item._id.toString());
+      });
+
+      // get member info
+
+      const listMember: { [user_id: string]: UserMessageResponse } =
+        await this.userModel
+          .find(
+            { _id: { $in: listUserIds } },
+            { _id: true, full_name: true, avatar: true, status: true },
+          )
+          .then((data) => {
+            return data.reduce((map, current) => {
+              map[current._id.toString()] = {
+                _id: current._id.toString(),
+                avatar: current.avatar,
+                full_name: current.full_name,
+              };
+              return map;
+            }, {});
+          });
+
+      // get last message info
+
+      const listMessage = await this.getListLastMessageConversation(
+        listMessageIds,
+      ).then((data) => {
+        return data.reduce((map, message: any) => {
+          map[message._id.toString()] = {
+            ...message,
+            user: new UserMessageResponse(message.user_id),
+            updated_at: formatUnixTimestamp(message.updated_at),
+            created_at: formatUnixTimestamp(message.created_at),
+          };
+          return map;
+        }, {});
+      });
+
+      const listConversationDisableNotify =
+        await this.getListConversationDisableNotify(user_id);
+
+      const data = conversations.map((item) => {
+        const id = item._id.toString();
+
+        if (item.type == CONVERSATION_TYPE.PERSONAL) {
+          const otherUserId = item.members.find((_id) => _id != user_id);
+
+          const otherUser = listMember[otherUserId];
+
+          item.avatar = otherUser?.avatar || '';
+          item.name = otherUser?.full_name || '';
+        }
+
+        return {
+          ...item,
+          _id: id,
+          is_notify: listConversationDisableNotify.find(
+            (temp) => temp.conversation_id == id,
+          )
+            ? 0
+            : 1,
+          is_pinned: 1,
+
+          created_at: formatUnixTimestamp(item.created_at),
+          updated_at: formatUnixTimestamp(item.updated_at),
+          last_activity: formatUnixTimestamp(item.last_activity),
+          last_message: new LastMessageResponse({
+            ...listMessage[item.last_message_id],
+            _id: listMessage[item.last_message_id]._id.toString(),
+          }),
+        };
+      });
+
+      return new BaseResponse(200, 'OK', data);
+    } catch (error) {
+      console.log(
+        'ConversationService ~ getListPinnedConversation ~ error:',
+        error,
+      );
+      throw new ExceptionResponse(error.status, error.message, error);
+    }
   }
 }
