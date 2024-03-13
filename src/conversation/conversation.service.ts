@@ -410,6 +410,21 @@ export class ConversationService {
         )
         .lean();
 
+      const memberPermissions = await this.conversationMemberModel
+        .find({
+          conversation_id: body.conversation_id,
+        })
+        .lean();
+
+      const userPermissions = memberPermissions.reduce((map, current) => {
+        map[current.user_id] = current?.permission || 0;
+        return map;
+      }, {});
+
+      console.log(
+        'ConversationService ~ detailConversation ~ userPermissions:',
+        userPermissions,
+      );
       if (conversation.type == 2) {
         const other = members.find((item) => {
           return item._id.toString() != user_id;
@@ -422,7 +437,13 @@ export class ConversationService {
       }
       const result = {
         ...conversation,
-        members: members,
+        members: members.map((item) => {
+          return {
+            ...item,
+            _id: item._id.toString(),
+            permission: userPermissions[item._id.toString()] || 0,
+          };
+        }),
         // members: member.map((item) => {
         //   return item.user_id;
         // }),

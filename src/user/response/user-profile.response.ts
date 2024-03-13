@@ -2,7 +2,6 @@ import { ApiProperty } from '@nestjs/swagger';
 import * as moment from 'moment';
 import { Types } from 'mongoose';
 import { Role, USER_STATUS } from 'src/enum';
-import { User } from 'src/shared';
 
 export class UserProfileResponse {
   @ApiProperty({
