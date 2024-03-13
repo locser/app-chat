@@ -51,6 +51,19 @@ export class ConversationController {
     return data;
   }
 
+  @Get('1')
+  @ApiOperation({ summary: 'Danh sách cuộc trò chuyện' })
+  async getListConversation1(
+    @Request() req: RequestWithUser,
+    @Query() query: QueryConversation,
+  ) {
+    const data = await this.conversationService.getListConversation1(
+      req.user._id,
+      query,
+    );
+    return data;
+  }
+
   @Get('pinned')
   @ApiOperation({ summary: 'Danh sách cuộc trò chuyện' })
   async getListPinnedConversation(
