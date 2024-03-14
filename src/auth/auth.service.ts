@@ -4,7 +4,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import * as bcrypt from 'bcrypt';
 import { Model, Types } from 'mongoose';
 import { USER_STATUS } from 'src/enum';
-import { ConversationDeleteHistory, ExceptionResponse, User } from 'src/shared';
+import { ExceptionResponse, User } from 'src/shared';
 import { BaseResponse } from 'src/shared/base-response.response';
 import { LoginDto } from './dto/user-sign-in.dto';
 import { SignUpDto } from './dto/user-sign-up.dto';
@@ -17,8 +17,6 @@ export class AuthService {
   constructor(
     @InjectModel(User.name)
     private readonly userModel: Model<User>,
-    @InjectModel(ConversationDeleteHistory.name)
-    private readonly conversationDeleteHistoryModel: Model<ConversationDeleteHistory>,
     private jwtService: JwtService,
   ) {}
 
@@ -48,11 +46,6 @@ export class AuthService {
         { _id: new Types.ObjectId(hasUser._id) },
         { access_token: access_token, last_connect: +moment() },
       );
-
-      await this.conversationDeleteHistoryModel.create({
-        user_id: hasUser._id.toString(),
-        conversation_id: [],
-      });
 
       return new BaseResponse(200, 'OK', {
         _id: hasUser._id,

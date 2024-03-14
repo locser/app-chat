@@ -7,8 +7,6 @@ import {
   CategorySticker,
   CategoryStickerSchema,
   Conversation,
-  ConversationDeleteHistory,
-  ConversationDeleteHistorySchema,
   ConversationDisableNotify,
   ConversationDisableNotifySchema,
   ConversationHidden,
@@ -103,10 +101,6 @@ import {
       {
         name: ConversationDisableNotify.name,
         schema: ConversationDisableNotifySchema,
-      },
-      {
-        name: ConversationDeleteHistory.name,
-        schema: ConversationDeleteHistorySchema,
       },
     ]),
   ],
