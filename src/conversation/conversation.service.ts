@@ -583,7 +583,7 @@ export class ConversationService {
       return new BaseResponse(200, 'OK');
     } catch (error) {
       console.log('ConversationService ~ hiddenConversation ~ error:', error);
-      throw new ExceptionResponse(400, 'FAILED', error);
+      return error.response;
     }
   }
 
@@ -610,7 +610,7 @@ export class ConversationService {
       return new BaseResponse(200, 'OK');
     } catch (error) {
       console.log('ConversationService ~ deleteConversation ~ error:', error);
-      throw new ExceptionResponse(400, 'FAILED', error);
+      return error.response;
     }
   }
 
@@ -645,7 +645,7 @@ export class ConversationService {
       return new BaseResponse(200, 'OK');
     } catch (error) {
       console.log('ConversationService ~ disableNotify ~ error:', error);
-      throw new ExceptionResponse(400, 'FAILED', error);
+      return error.response;
     }
   }
 
@@ -679,7 +679,7 @@ export class ConversationService {
       return new BaseResponse(200, 'OK');
     } catch (error) {
       console.log('ConversationService ~ pinConversation ~ error:', error);
-      throw new ExceptionResponse(400, 'FAILED', error);
+      return error.response;
     }
   }
 

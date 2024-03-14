@@ -30,6 +30,216 @@ import { Friend } from 'src/shared/friend.entity';
 
 @Injectable()
 export class ConversationGroupService {
+  constructor(
+    @InjectModel(User.name)
+    private readonly userModel: Model<User>,
+
+    @InjectModel(Conversation.name)
+    private readonly conversationModel: Model<Conversation>,
+
+    @InjectModel(ConversationMember.name)
+    private readonly conversationMemberModel: Model<ConversationMember>,
+
+    @InjectModel(ConversationMemberWaitingConfirm.name)
+    private readonly conversationMemberWaitingModel: Model<ConversationMemberWaitingConfirm>,
+
+    @InjectModel(Message.name)
+    private readonly messageModel: Model<Message>,
+
+    @InjectModel(Friend.name)
+    private readonly friendModel: Model<Friend>,
+  ) {}
+
+  async updatePermissionConversation(
+    conversation_id: string,
+    body: UpdatePermissionConversation,
+    user_id: string,
+  ) {
+    try {
+      const member_id = body.user_id;
+      const permission = body.permission;
+
+      if (!checkMongoId(member_id)) {
+        throw new ExceptionResponse(400, 'member_id không hợp lệ');
+      }
+
+      const member = await this.userModel.findOne({
+        status: USER_STATUS.ACTIVE,
+        _id: new Types.ObjectId(member_id),
+      });
+
+      if (!member) {
+        throw new ExceptionResponse(404, 'Không tìm thấy user hợp lệ!');
+      }
+
+      const conversation = await this.getOneConversation(conversation_id);
+
+      if (conversation.type !== CONVERSATION_TYPE.GROUP) {
+        throw new ExceptionResponse(
+          404,
+          'Chỉ có thể sử dụng với cuộc trò chuyện nhóm!',
+        );
+      }
+
+      if (
+        !conversation?.members?.includes(user_id) ||
+        !conversation?.members?.includes(member_id)
+      ) {
+        throw new ExceptionResponse(404, 'Có user không hợp lệ!');
+      }
+
+      if (conversation.owner_id !== user_id) {
+        throw new ExceptionResponse(400, 'Bạn không có quyền sử dụng!');
+      }
+
+      if (permission == CONVERSATION_MEMBER_PERMISSION.OWNER) {
+        await this.conversationMemberModel.updateOne(
+          {
+            user_id: user_id,
+            conversation_id: conversation_id,
+          },
+          {
+            permission: CONVERSATION_MEMBER_PERMISSION.MEMBER,
+          },
+        );
+
+        await this.conversationModel.updateOne(
+          { _id: conversation._id },
+          { owner_id: member_id },
+        );
+      }
+
+      await this.conversationMemberModel.updateOne(
+        {
+          user_id: member_id,
+          conversation_id: conversation_id,
+        },
+        {
+          permission: permission,
+        },
+      );
+
+      return new BaseResponse(200, 'OK', { name: conversation.name });
+    } catch (error) {
+      console.log(
+        'ConversationService ~ updatePermissionConversation ~ error:',
+        error,
+      );
+      return error.response;
+    }
+  }
+
+  async createNewGroupConversation(
+    user_id: string,
+    createConversation: CreateGroupConversationDto,
+  ) {
+    const { name, member_ids } = createConversation;
+    try {
+      const member = await this.userModel.find({
+        _id: { $in: member_ids.map((_id) => new Types.ObjectId(_id)) },
+      });
+
+      if (!(member?.length == member_ids.length)) {
+        throw new ExceptionResponse(400, 'Có user không tồn tại');
+      }
+
+      const newConversation = await this.conversationModel.create({
+        name: name,
+        owner_id: user_id,
+        members: [user_id, ...member_ids],
+        type: CONVERSATION_TYPE.GROUP,
+        no_of_member: member_ids.length + 1,
+      });
+
+      //tạo member
+
+      // await this.conversationMemberModel.create({
+      //   user_id: user_id,
+      //   permission: CONVERSATION_MEMBER_PERMISSION.OWNER,
+      //   conversation_id: newConversation._id.toString(),
+      // });
+
+      await this.conversationMemberModel.create(
+        newConversation.members.map((id) => {
+          return {
+            user_id: id,
+            permission:
+              id.toString() == user_id.toString()
+                ? CONVERSATION_MEMBER_PERMISSION.OWNER
+                : CONVERSATION_MEMBER_PERMISSION.MEMBER,
+            conversation_id: newConversation._id.toString(),
+          };
+        }),
+      );
+
+      // tạo tin nhắn chào mừng - hiện tại chưa được tạo bừa cái message text
+      const firstMessage = await this.messageModel.create({
+        user_id: user_id,
+        conversation_id: newConversation._id.toString(),
+        message: 'Xin chào cuộc trò chuyện nhóm mới',
+        type: MESSAGE_TYPE.TEXT,
+      });
+
+      await this.conversationModel.updateOne(
+        {
+          _id: newConversation.id,
+        },
+        {
+          last_message_id: firstMessage._id.toString(),
+          last_activity: +moment(),
+          updated_at: +moment(),
+        },
+      );
+
+      return new BaseResponse(201, 'OK', {
+        conversation_id: newConversation._id,
+      });
+    } catch (error) {
+      console.log('ConversationGroupService ~ error:', error);
+      return error.response;
+    }
+  }
+
+  async isJoinWithLink(conversation_id: string, user_id: string) {
+    try {
+      const conversation = await this.getOneConversation(conversation_id);
+
+      if (
+        !conversation?.members?.includes(user_id) ||
+        conversation.type != CONVERSATION_TYPE.GROUP
+      ) {
+        throw new ExceptionResponse(400, 'Không tìm thấy cuộc trò chuyện');
+      }
+
+      conversation.is_join_with_link =
+        conversation.is_join_with_link == BOOLEAN.TRUE
+          ? BOOLEAN.FALSE
+          : BOOLEAN.TRUE;
+
+      if (conversation.is_join_with_link == BOOLEAN.FALSE)
+        conversation.link_join = '';
+      else conversation.link_join = generateRandomString(10);
+
+      conversation.save();
+
+      return new BaseResponse(200, 'OK', { link_join: conversation.link_join });
+    } catch (error) {
+      console.log('ConversationGroupService ~ isJoinWithLink ~ error:', error);
+      // throw new ExceptionResponse(400, 'FAILED', error);
+      return error.response;
+    }
+  }
+
+  private async getOneConversation(conversation_id: string) {
+    if (!checkMongoId(conversation_id)) {
+      throw new ExceptionResponse(400, 'Conversation_id không hợp lệ');
+    }
+
+    return await this.conversationModel.findById({
+      _id: new Types.ObjectId(conversation_id),
+    });
+  }
+
   async getMembersConversation(conversation_id: string, user_id: string) {
     try {
       const listMember = await this.conversationMemberModel
@@ -66,6 +276,7 @@ export class ConversationGroupService {
         'ConversationGroupService ~ getMembersConversation ~ error:',
         error,
       );
+      return error.response;
     }
   }
   async removeMembersConversation(
@@ -125,7 +336,7 @@ export class ConversationGroupService {
         'ConversationGroupService ~ removeMembersConversation ~ error:',
         error,
       );
-      throw new ExceptionResponse(400, error?.message || '', error);
+      return error.response;
     }
   }
   async addMembersConversation(
@@ -222,7 +433,7 @@ export class ConversationGroupService {
         error,
       );
 
-      return error;
+      return error.response;
     }
 
     async function addListMember(
@@ -280,7 +491,7 @@ export class ConversationGroupService {
         error,
       );
 
-      return error;
+      return error.response;
     }
   }
 
@@ -317,7 +528,7 @@ export class ConversationGroupService {
         error,
       );
 
-      return error;
+      return error.response;
     }
   }
   async joinWithLink(link_join: string, user_id: string) {
@@ -404,216 +615,8 @@ export class ConversationGroupService {
       return new BaseResponse(200, 'OK');
     } catch (error) {
       console.log('ConversationGroupService ~ joinWithLink ~ error:', error);
-      throw new ExceptionResponse(400, 'FAILED', error);
+      return error.response;
+      // throw new ExceptionResponse(400, 'FAILED', error);
     }
-  }
-
-  constructor(
-    @InjectModel(User.name)
-    private readonly userModel: Model<User>,
-
-    @InjectModel(Conversation.name)
-    private readonly conversationModel: Model<Conversation>,
-
-    @InjectModel(ConversationMember.name)
-    private readonly conversationMemberModel: Model<ConversationMember>,
-
-    @InjectModel(ConversationMemberWaitingConfirm.name)
-    private readonly conversationMemberWaitingModel: Model<ConversationMemberWaitingConfirm>,
-
-    @InjectModel(Message.name)
-    private readonly messageModel: Model<Message>,
-
-    @InjectModel(Friend.name)
-    private readonly friendModel: Model<Friend>,
-  ) {}
-
-  async updatePermissionConversation(
-    conversation_id: string,
-    body: UpdatePermissionConversation,
-    user_id: string,
-  ) {
-    try {
-      const member_id = body.user_id;
-      const permission = body.permission;
-
-      if (!checkMongoId(member_id)) {
-        throw new ExceptionResponse(400, 'member_id không hợp lệ');
-      }
-
-      const member = await this.userModel.findOne({
-        status: USER_STATUS.ACTIVE,
-        _id: new Types.ObjectId(member_id),
-      });
-
-      if (!member) {
-        throw new ExceptionResponse(404, 'Không tìm thấy user hợp lệ!');
-      }
-
-      const conversation = await this.getOneConversation(conversation_id);
-
-      if (conversation.type !== CONVERSATION_TYPE.GROUP) {
-        throw new ExceptionResponse(
-          404,
-          'Chỉ có thể sử dụng với cuộc trò chuyện nhóm!',
-        );
-      }
-
-      if (
-        !conversation?.members?.includes(user_id) ||
-        !conversation?.members?.includes(member_id)
-      ) {
-        throw new ExceptionResponse(404, 'Có user không hợp lệ!');
-      }
-
-      if (conversation.owner_id !== user_id) {
-        throw new ExceptionResponse(400, 'Bạn không có quyền sử dụng!');
-      }
-
-      if (permission == CONVERSATION_MEMBER_PERMISSION.OWNER) {
-        await this.conversationMemberModel.updateOne(
-          {
-            user_id: user_id,
-            conversation_id: conversation_id,
-          },
-          {
-            permission: CONVERSATION_MEMBER_PERMISSION.MEMBER,
-          },
-        );
-
-        await this.conversationModel.updateOne(
-          { _id: conversation._id },
-          { owner_id: member_id },
-        );
-      }
-
-      await this.conversationMemberModel.updateOne(
-        {
-          user_id: member_id,
-          conversation_id: conversation_id,
-        },
-        {
-          permission: permission,
-        },
-      );
-
-      return new BaseResponse(200, 'OK', { name: conversation.name });
-    } catch (error) {
-      console.log(
-        'ConversationService ~ updatePermissionConversation ~ error:',
-        error,
-      );
-      return new BaseResponse(400, 'FAIL', error);
-    }
-  }
-
-  async createNewGroupConversation(
-    user_id: string,
-    createConversation: CreateGroupConversationDto,
-  ) {
-    const { name, member_ids } = createConversation;
-    try {
-      const member = await this.userModel.find({
-        _id: { $in: member_ids.map((_id) => new Types.ObjectId(_id)) },
-      });
-
-      if (!(member?.length == member_ids.length)) {
-        throw new ExceptionResponse(400, 'Có user không tồn tại');
-      }
-
-      const newConversation = await this.conversationModel.create({
-        name: name,
-        owner_id: user_id,
-        members: [user_id, ...member_ids],
-        type: CONVERSATION_TYPE.GROUP,
-        no_of_member: member_ids.length + 1,
-      });
-
-      //tạo member
-
-      // await this.conversationMemberModel.create({
-      //   user_id: user_id,
-      //   permission: CONVERSATION_MEMBER_PERMISSION.OWNER,
-      //   conversation_id: newConversation._id.toString(),
-      // });
-
-      await this.conversationMemberModel.create(
-        newConversation.members.map((id) => {
-          return {
-            user_id: id,
-            permission:
-              id.toString() == user_id.toString()
-                ? CONVERSATION_MEMBER_PERMISSION.OWNER
-                : CONVERSATION_MEMBER_PERMISSION.MEMBER,
-            conversation_id: newConversation._id.toString(),
-          };
-        }),
-      );
-
-      // tạo tin nhắn chào mừng - hiện tại chưa được tạo bừa cái message text
-      const firstMessage = await this.messageModel.create({
-        user_id: user_id,
-        conversation_id: newConversation._id.toString(),
-        message: 'Xin chào cuộc trò chuyện nhóm mới',
-        type: MESSAGE_TYPE.TEXT,
-      });
-
-      await this.conversationModel.updateOne(
-        {
-          _id: newConversation.id,
-        },
-        {
-          last_message_id: firstMessage._id.toString(),
-          last_activity: +moment(),
-          updated_at: +moment(),
-        },
-      );
-
-      return new BaseResponse(201, 'OK', {
-        conversation_id: newConversation._id,
-      });
-    } catch (error) {
-      console.log('ConversationGroupService ~ error:', error);
-      return new BaseResponse(400, 'FAIL', error);
-    }
-  }
-
-  async isJoinWithLink(conversation_id: string, user_id: string) {
-    try {
-      const conversation = await this.getOneConversation(conversation_id);
-
-      if (
-        !conversation?.members?.includes(user_id) ||
-        conversation.type != CONVERSATION_TYPE.GROUP
-      ) {
-        throw new ExceptionResponse(400, 'Không tìm thấy cuộc trò chuyện');
-      }
-
-      conversation.is_join_with_link =
-        conversation.is_join_with_link == BOOLEAN.TRUE
-          ? BOOLEAN.FALSE
-          : BOOLEAN.TRUE;
-
-      if (conversation.is_join_with_link == BOOLEAN.FALSE)
-        conversation.link_join = '';
-      else conversation.link_join = generateRandomString(10);
-
-      conversation.save();
-
-      return new BaseResponse(200, 'OK', { link_join: conversation.link_join });
-    } catch (error) {
-      console.log('ConversationGroupService ~ isJoinWithLink ~ error:', error);
-      throw new ExceptionResponse(400, 'FAILED', error);
-    }
-  }
-
-  private async getOneConversation(conversation_id: string) {
-    if (!checkMongoId(conversation_id)) {
-      throw new ExceptionResponse(400, 'Conversation_id không hợp lệ');
-    }
-
-    return await this.conversationModel.findById({
-      _id: new Types.ObjectId(conversation_id),
-    });
   }
 }
