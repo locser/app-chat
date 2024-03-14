@@ -153,7 +153,7 @@ export class ConversationService {
   }
 
   async getListConversation1(user_id: string, query_param: QueryConversation) {
-    const { limit = 20 } = query_param;
+    const { limit = 20, position } = query_param;
 
     try {
       const listConversationHidden =
@@ -170,46 +170,46 @@ export class ConversationService {
         (item) => new Types.ObjectId(item.conversation_id),
       );
 
-      const conversations = await this.conversationModel
+      const conversations1 = await this.conversationModel
         .aggregate<Conversation>([
           // { $project: { conversationStrId: { $toString: '$_id' } } },
-          {
-            $lookup: {
-              from: 'conversationmembers',
-              let: {
-                conversationId: '$conversation_id',
-                last_activity: '$last_activity',
-              }, // Define the variable here
-              localField: '_id',
-              foreignField: 'conversation_id',
-              pipeline: [
-                {
-                  $addFields: {
-                    conversation_id: { $toString: '$_id' },
-                    user_id: { $toString: '$user_id' },
-                  },
-                },
-                {
-                  $match: {
-                    $expr: {
-                      $and: [
-                        {
-                          $eq: ['$conversation_id', '$$conversationId'],
-                        },
-                        {
-                          $lt: ['$message_pre_id', '$$last_activity'],
-                        },
-                        {
-                          // $eq: ['$user_id', '$$user_id'],
-                        },
-                      ],
-                    },
-                  },
-                },
-              ],
-              as: 'conversationmembers',
-            },
-          },
+          // {
+          //   $lookup: {
+          //     from: 'conversationmembers',
+          //     let: {
+          //       conversationId: '$conversation_id',
+          //       last_activity: '$last_activity',
+          //     }, // Define the variable here
+          //     localField: '_id',
+          //     foreignField: 'conversation_id',
+          //     pipeline: [
+          //       {
+          //         $addFields: {
+          //           conversation_id: { $toString: '$_id' },
+          //           user_id: { $toString: '$user_id' },
+          //         },
+          //       },
+          //       {
+          //         $match: {
+          //           $expr: {
+          //             $and: [
+          //               {
+          //                 $eq: ['$conversation_id', '$$conversationId'],
+          //               },
+          //               {
+          //                 $lt: ['$message_pre_id', '$$last_activity'],
+          //               },
+          //               {
+          //                 // $eq: ['$user_id', '$$user_id'],
+          //               },
+          //             ],
+          //           },
+          //         },
+          //       },
+          //     ],
+          //     as: 'conversationmembers',
+          //   },
+          // },
           {
             $match: {
               _id: {
@@ -221,22 +221,9 @@ export class ConversationService {
               members: { $in: [user_id] },
               last_message_id: { $ne: '' },
               status: CONVERSATION_STATUS.ACTIVE,
-              // 'conversation_member.user_id': user_id,
-              // $expr: {
-              //   $gt: ['$last_activity', '$conversation_member.message_pre_id'],
-              // },
+              ...(position ? { updated_at: { $lt: position || '' } } : {}),
             },
           },
-          // {
-          //   $unwind: '$conversationmembers',
-          // },
-          // {
-          //   $replaceRoot: {
-          //     newRoot: {
-          //       $mergeObjects: ['$conversationmembers', '$$ROOT'],
-          //     },
-          //   },
-          // },
         ])
         .project({
           __v: false,
@@ -264,32 +251,10 @@ export class ConversationService {
       //   conversations,
       // );
 
-      const listConversation = conversations.filter(
+      const conversations = conversations1.filter(
         (item) =>
           item.last_activity > mapConversationMember[item._id.toString()],
       );
-      // .map((item) =>
-      // {
-      // console.log(
-      //   'ConversationService ~ listConversation ~ item.last_activity- mapConversationMember[item._id.toString():',
-      //   item.last_activity,
-      //   mapConversationMember[item._id.toString()],
-      // );
-
-      // if (item.last_activity <= mapConversationMember[item._id.toString()]) {
-      //   console.log('thawfng nay no xoa cuoc tro chuyen roi ne', item._id);
-      // }
-
-      // return item;
-      // });
-
-      // console.log(
-      //   'ConversationService ~ getListConversation1 ~ conversations:',
-      //   listConversation,
-      // );
-
-      return listConversation;
-
       if (conversations.length == 0) {
         return new BaseResponse(200, 'OK', []);
       }
@@ -375,6 +340,7 @@ export class ConversationService {
             ...listMessage[item.last_message_id],
             _id: listMessage[item.last_message_id]._id.toString(),
           }),
+          position: item.updated_at.toString(),
         };
       });
 
