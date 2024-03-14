@@ -154,55 +154,70 @@ export class ConversationService {
 
   async getListConversation1(user_id: string, query_param: QueryConversation) {
     const { limit = 20 } = query_param;
-    console.log(
-      'ConversationService ~ getListConversation1 ~ user_id:',
-      user_id,
-    );
 
     try {
+      const listConversationHidden =
+        await this.getListConversationHidden(user_id);
+
+      const listConversationHiddenIds = listConversationHidden.map(
+        (item) => new Types.ObjectId(item._id),
+      );
+
+      const listConversationPinned =
+        await this.getListConversationPinned(user_id);
+
+      const listConversationPinnedIds = listConversationPinned.map(
+        (item) => new Types.ObjectId(item.conversation_id),
+      );
+
       const conversations = await this.conversationModel
         .aggregate<Conversation>([
           // { $project: { conversationStrId: { $toString: '$_id' } } },
           {
             $lookup: {
-              from: ConversationMember.name,
+              from: 'conversationmembers',
               let: {
                 conversationId: '$conversation_id',
                 last_activity: '$last_activity',
               }, // Define the variable here
-              // localField: '_id',
-              // foreignField: 'conversation_id',
+              localField: '_id',
+              foreignField: 'conversation_id',
               pipeline: [
                 {
-                  $addFields: { conversation_id: { $toString: '$_id' } },
-                  // $addFields: { conversation_id: { $toString: '$_id' } },
+                  $addFields: {
+                    conversation_id: { $toString: '$_id' },
+                    user_id: { $toString: '$user_id' },
+                  },
                 },
                 {
                   $match: {
                     $expr: {
                       $and: [
                         {
-                          $eq: [
-                            '$conversation_member.conversation_id',
-                            '$$conversationId',
-                          ],
+                          $eq: ['$conversation_id', '$$conversationId'],
                         },
                         {
-                          $lt: [
-                            '$conversation_member.message_pre_id',
-                            '$$last_activity',
-                          ],
+                          $lt: ['$message_pre_id', '$$last_activity'],
+                        },
+                        {
+                          // $eq: ['$user_id', '$$user_id'],
                         },
                       ],
                     },
                   },
                 },
               ],
-              as: 'conversation_member',
+              as: 'conversationmembers',
             },
           },
           {
             $match: {
+              _id: {
+                $nin: [
+                  ...listConversationHiddenIds,
+                  ...listConversationPinnedIds,
+                ],
+              },
               members: { $in: [user_id] },
               last_message_id: { $ne: '' },
               status: CONVERSATION_STATUS.ACTIVE,
@@ -212,6 +227,16 @@ export class ConversationService {
               // },
             },
           },
+          // {
+          //   $unwind: '$conversationmembers',
+          // },
+          // {
+          //   $replaceRoot: {
+          //     newRoot: {
+          //       $mergeObjects: ['$conversationmembers', '$$ROOT'],
+          //     },
+          //   },
+          // },
         ])
         .project({
           __v: false,
@@ -228,29 +253,40 @@ export class ConversationService {
 
       const mapConversationMember = conversationMember.reduce(
         (map, current) => {
-          map[current.conversation_id] = current.updated_at;
+          map[current.conversation_id] = current.message_pre_id;
           return map;
         },
         {},
       );
 
-      console.log(
-        'ConversationService ~ getListConversation1 ~ mapConversationMember:',
-        conversations,
+      // console.log(
+      //   'ConversationService ~ getListConversation1 ~ mapConversationMember:',
+      //   conversations,
+      // );
+
+      const listConversation = conversations.filter(
+        (item) =>
+          item.last_activity > mapConversationMember[item._id.toString()],
       );
+      // .map((item) =>
+      // {
+      // console.log(
+      //   'ConversationService ~ listConversation ~ item.last_activity- mapConversationMember[item._id.toString():',
+      //   item.last_activity,
+      //   mapConversationMember[item._id.toString()],
+      // );
 
-      const listConversation = conversations.map((item) => {
-        if (item.last_activity <= mapConversationMember[item._id.toString()]) {
-          console.log('thawfng nay no xoa cuoc tro chuyen roi ne', item._id);
-        }
+      // if (item.last_activity <= mapConversationMember[item._id.toString()]) {
+      //   console.log('thawfng nay no xoa cuoc tro chuyen roi ne', item._id);
+      // }
 
-        return item;
-      });
+      // return item;
+      // });
 
-      console.log(
-        'ConversationService ~ getListConversation1 ~ conversations:',
-        listConversation,
-      );
+      // console.log(
+      //   'ConversationService ~ getListConversation1 ~ conversations:',
+      //   listConversation,
+      // );
 
       return listConversation;
 
@@ -360,11 +396,20 @@ export class ConversationService {
         (item) => new Types.ObjectId(item._id),
       );
 
+      const listConversationPinned =
+        await this.getListConversationPinned(user_id);
+
+      const listConversationPinnedIds = listConversationPinned.map(
+        (item) => new Types.ObjectId(item.conversation_id),
+      );
+
       const query = {
         members: { $in: [user_id] },
         last_message_id: { $ne: '' },
         status: CONVERSATION_STATUS.ACTIVE,
-        _id: { $nin: listConversationHiddenIds },
+        _id: {
+          $nin: [...listConversationHiddenIds, ...listConversationPinnedIds],
+        },
       };
 
       if (position?.length) {
@@ -583,7 +628,7 @@ export class ConversationService {
       return new BaseResponse(200, 'OK');
     } catch (error) {
       console.log('ConversationService ~ hiddenConversation ~ error:', error);
-      throw new ExceptionResponse(400, 'FAILED', error);
+      return error.response;
     }
   }
 
@@ -601,16 +646,27 @@ export class ConversationService {
           conversation_id: conversation_id,
         },
         {
-          message_last_id: conversation.last_message_id,
-          message_pre_id: conversation.last_message_id,
+          message_last_id: conversation.updated_at,
+          message_pre_id: conversation.updated_at,
           updated_at: +moment(),
         },
       );
 
+      // conversation_ids is set, if not exist, create new
+      // await this.conversationDeleteHistoryModel.updateOne(
+      //   { user_id: user_id },
+      //   {
+      //     $addToSet: {
+      //       conversation_ids: { $ne: conversation_id },
+      //     },
+      //   },
+      //   { upsert: true , },
+      // );
+
       return new BaseResponse(200, 'OK');
     } catch (error) {
       console.log('ConversationService ~ deleteConversation ~ error:', error);
-      throw new ExceptionResponse(400, 'FAILED', error);
+      return error.response;
     }
   }
 
@@ -645,7 +701,7 @@ export class ConversationService {
       return new BaseResponse(200, 'OK');
     } catch (error) {
       console.log('ConversationService ~ disableNotify ~ error:', error);
-      throw new ExceptionResponse(400, 'FAILED', error);
+      return error.response;
     }
   }
 
@@ -679,7 +735,7 @@ export class ConversationService {
       return new BaseResponse(200, 'OK');
     } catch (error) {
       console.log('ConversationService ~ pinConversation ~ error:', error);
-      throw new ExceptionResponse(400, 'FAILED', error);
+      return error.response;
     }
   }
 

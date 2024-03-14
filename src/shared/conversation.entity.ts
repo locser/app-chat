@@ -103,6 +103,9 @@ export class Conversation extends BaseModel {
   })
   status: CONVERSATION_STATUS;
 
+  @Prop({
+    type: 'string',
+  })
   owner_id: string;
 }
 
