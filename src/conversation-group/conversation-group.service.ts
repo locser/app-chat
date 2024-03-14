@@ -85,16 +85,10 @@ export class ConversationGroupService {
       if (
         !conversation ||
         conversation.status != CONVERSATION_STATUS.ACTIVE ||
-        !conversation.members.includes(user_id)
+        !conversation.members.includes(user_id) ||
+        !conversation.members.includes(member_id)
       ) {
         throw new ExceptionResponse(404, 'Không tìm thấy cuộc trò chuyện');
-      }
-
-      if (!conversation.members.includes(member_id)) {
-        throw new ExceptionResponse(
-          400,
-          'Không tìm thấy nguời dùng này trong trò chuyện',
-        );
       }
 
       const permissionUser = await this.conversationMemberModel.findOne({
@@ -118,6 +112,11 @@ export class ConversationGroupService {
       conversation.no_of_member -= 1;
       conversation.last_activity = +moment();
 
+      await this.conversationMemberModel.deleteOne({
+        user_id: member_id,
+        conversation_id: conversation_id,
+      });
+
       await conversation.save();
 
       return new BaseResponse(200, 'OK');
@@ -126,6 +125,7 @@ export class ConversationGroupService {
         'ConversationGroupService ~ removeMembersConversation ~ error:',
         error,
       );
+      throw new ExceptionResponse(400, error?.message || '', error);
     }
   }
   async addMembersConversation(
@@ -531,17 +531,20 @@ export class ConversationGroupService {
 
       //tạo member
 
-      await this.conversationMemberModel.create({
-        user_id: user_id,
-        permission: CONVERSATION_MEMBER_PERMISSION.OWNER,
-        conversation_id: newConversation._id.toString(),
-      });
+      // await this.conversationMemberModel.create({
+      //   user_id: user_id,
+      //   permission: CONVERSATION_MEMBER_PERMISSION.OWNER,
+      //   conversation_id: newConversation._id.toString(),
+      // });
 
       await this.conversationMemberModel.create(
-        member_ids.map((id) => {
+        newConversation.members.map((id) => {
           return {
             user_id: id,
-            permission: CONVERSATION_MEMBER_PERMISSION.MEMBER,
+            permission:
+              id.toString() == user_id.toString()
+                ? CONVERSATION_MEMBER_PERMISSION.OWNER
+                : CONVERSATION_MEMBER_PERMISSION.MEMBER,
             conversation_id: newConversation._id.toString(),
           };
         }),
