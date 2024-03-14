@@ -38,7 +38,7 @@ export class ConversationController {
     return data;
   }
 
-  @Get('')
+  @Get('1')
   @ApiOperation({ summary: 'Danh sách cuộc trò chuyện' })
   async getListConversation(
     @Request() req: RequestWithUser,
@@ -51,7 +51,7 @@ export class ConversationController {
     return data;
   }
 
-  @Get('1')
+  @Get('')
   @ApiOperation({ summary: 'Danh sách cuộc trò chuyện' })
   async getListConversation1(
     @Request() req: RequestWithUser,

@@ -7,6 +7,8 @@ import {
   CategorySticker,
   CategoryStickerSchema,
   Conversation,
+  ConversationDeleteHistory,
+  ConversationDeleteHistorySchema,
   ConversationDisableNotify,
   ConversationDisableNotifySchema,
   ConversationHidden,
@@ -31,7 +33,7 @@ import {
     ConfigNest.forRoot({ isGlobal: true }),
 
     MongooseModule.forRootAsync({
-      imports: [ConfigModule],
+      imports: [ConfigMongoModule],
       useFactory: async (configService: ConfigMongoService) =>
         await configService.createMongooseOptions(),
       inject: [ConfigMongoService],
@@ -102,9 +104,13 @@ import {
         name: ConversationDisableNotify.name,
         schema: ConversationDisableNotifySchema,
       },
+      {
+        name: ConversationDeleteHistory.name,
+        schema: ConversationDeleteHistorySchema,
+      },
     ]),
   ],
   providers: [ConfigMongoService],
   exports: [ConfigMongoService],
 })
-export class ConfigModule {}
+export class ConfigMongoModule {}

@@ -518,7 +518,11 @@ export class ConversationGroupService {
         conversation_id: conversation_id,
       });
 
-      conversation.members.filter((item) => item != user_id);
+      conversation.members = conversation.members.filter(
+        (item) => item != user_id,
+      );
+
+      conversation.no_of_member -= 1;
 
       conversation.save();
       return new BaseResponse(200, 'OK');

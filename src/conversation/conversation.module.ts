@@ -14,7 +14,6 @@ import {
   User,
   UserSchema,
 } from 'src/shared';
-import { ConfigModule } from 'src/config-mongo/config-mongo.module';
 import {
   ConversationHidden,
   ConversationHiddenSchema,
@@ -32,7 +31,6 @@ import {
   controllers: [ConversationController],
   providers: [ConversationService],
   imports: [
-    ConfigModule,
     MongooseModule.forFeature([
       {
         name: User.name,
