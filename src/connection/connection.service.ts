@@ -36,6 +36,7 @@ export class ConnectionService {
     | PromiseLike<{ message: any; conversation: any }> {
     throw new Error('Method not implemented.');
   }
+
   async validateUserTarget(target_user_id: string) {
     const validUserId = checkMongoId(target_user_id);
 
@@ -54,10 +55,6 @@ export class ConnectionService {
         full_name: true,
       },
     );
-
-    if (!userTarget) {
-      return null;
-    }
 
     return userTarget;
   }

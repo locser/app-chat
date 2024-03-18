@@ -867,6 +867,18 @@ export class ConversationService {
         }, {});
       });
 
+      const myPermissions = await this.conversationMemberModel
+        .find({
+          user_id: user_id,
+          conversation_id: { $in: listConversationIds },
+        })
+        .lean();
+
+      const mapMyPermissions = myPermissions.reduce((map, current) => {
+        map[current.conversation_id] = current?.permission;
+        return map;
+      }, {});
+
       const listConversationDisableNotify =
         await this.getListConversationDisableNotify(user_id);
 
@@ -899,6 +911,7 @@ export class ConversationService {
             ...listMessage[item.last_message_id],
             _id: listMessage[item.last_message_id]._id.toString(),
           }),
+          my_permission: mapMyPermissions[item._id.toString()] || 0,
         };
       });
 
