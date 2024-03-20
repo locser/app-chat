@@ -105,7 +105,7 @@ export class User extends BaseModel {
   @Prop({
     type: 'string',
     default: Role.User,
-    enum: ['user', 'admin'],
+    enum: ['user', 'admin', 'manager'],
   })
   role: Role;
 

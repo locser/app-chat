@@ -10,4 +10,5 @@ export enum USER_STATUS {
 export enum Role {
   User = 'user',
   Admin = 'admin',
+  Manager = 'manager',
 }

@@ -8,16 +8,16 @@ import {
   Request,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { DetailConversation } from 'src/conversation/dto/detail-conversation.dto';
 import { RequestWithUser } from 'src/shared/requests.type';
 import { ConversationGroupService } from './conversation-group.service';
-import { CreateGroupConversationDto } from './dto/create-group-conversation.dto';
-import { DetailConversation } from 'src/conversation/dto/detail-conversation.dto';
-import { QueryJoinWithLinkConversationDto } from './dto/query-join-with-link.dto';
-import { UpdatePermissionConversation } from './dto/update-permission.dto';
 import {
   AddMemberConversationDto,
   RemoveMemberConversationDto,
 } from './dto/add-member-conversation.dto';
+import { CreateGroupConversationDto } from './dto/create-group-conversation.dto';
+import { QueryJoinWithLinkConversationDto } from './dto/query-join-with-link.dto';
+import { UpdatePermissionConversation } from './dto/update-permission.dto';
 
 @ApiTags('API TRÒ CHUYỆN NHÓM')
 @Controller('conversation-group')
@@ -27,6 +27,7 @@ export class ConversationGroupController {
   ) {}
 
   @Post('create')
+  // @Roles(Role.Manager)
   @ApiOperation({ summary: 'Tạo cuộc trò chuyện nhóm' })
   async createNewGroupConversation(
     @Request() req: RequestWithUser,
