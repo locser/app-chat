@@ -918,17 +918,20 @@ export class ConversationService {
   }
 
   async getDetailConversationWithLinkJoin(linkJoin: string, userId: any) {
-    console.log(
-      '♥️ ~ ConversationService ~ getDetailConversationWithLinkJoin ~ linkJoin:',
-      linkJoin,
-    );
     const conversation: Conversation = await this.conversationModel
       .findOne({ link_join: linkJoin })
       .lean();
+
     if (!conversation)
       throw new ExceptionResponse(
         HttpStatus.NOT_FOUND,
         'Không tìm thấy cuộc trò chuyện',
+      );
+
+    if (conversation.members.includes(userId))
+      throw new ExceptionResponse(
+        HttpStatus.BAD_REQUEST,
+        'Bạn đã là thành viên của cuộc trò chuyện này',
       );
 
     const listMember = await this.conversationMemberModel
