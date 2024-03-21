@@ -26,6 +26,7 @@ import {
   ConversationDisableNotify,
   ConversationDisableNotifySchema,
 } from 'src/shared/conversation-disable-notify.entity';
+import { Friend, FriendSchema } from 'src/shared/friend.entity';
 
 @Module({
   controllers: [ConversationController],
@@ -64,6 +65,11 @@ import {
       {
         name: ConversationMemberWaitingConfirm.name,
         schema: ConversationMemberWaitingConfirmSchema,
+      },
+
+      {
+        name: Friend.name,
+        schema: FriendSchema,
       },
 
       {

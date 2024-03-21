@@ -27,6 +27,8 @@ import { DetailConversationResponse } from './response/detail-conversation.respo
 import { QueryConversation } from './response/query-conversation.dto';
 import { LastMessageResponse } from './response/last-message.interface';
 import { UserMessageResponse } from 'src/connection/response/user-message.response';
+import { Friend } from 'src/shared/friend.entity';
+import { DetailConversationLinkJoin } from 'src/util/swagger/detail-conver-link-join.swagger';
 
 @Injectable()
 export class ConversationService {
@@ -51,6 +53,9 @@ export class ConversationService {
 
     @InjectModel(ConversationDisableNotify.name)
     private readonly conversationDisableNotifyModel: Model<ConversationDisableNotify>,
+
+    @InjectModel(Friend.name)
+    private readonly friendModel: Model<Friend>,
 
     @InjectModel(Message.name)
     private readonly messageModel: Model<Message>,
@@ -910,5 +915,60 @@ export class ConversationService {
       );
       throw new ExceptionResponse(error.status, error.message, error);
     }
+  }
+
+  async getDetailConversationWithLinkJoin(linkJoin: string, userId: any) {
+    console.log(
+      '♥️ ~ ConversationService ~ getDetailConversationWithLinkJoin ~ linkJoin:',
+      linkJoin,
+    );
+    const conversation: Conversation = await this.conversationModel
+      .findOne({ link_join: linkJoin })
+      .lean();
+    if (!conversation)
+      throw new ExceptionResponse(
+        HttpStatus.NOT_FOUND,
+        'Không tìm thấy cuộc trò chuyện',
+      );
+
+    const listMember = await this.conversationMemberModel
+      .find({
+        conversation_id: conversation._id,
+        user_id: { $ne: userId },
+      })
+      .populate('user_id', '_id full_name avatar status')
+      .sort({ permission: 'desc', created_at: 'desc' })
+      .lean();
+
+    const response = await Promise.all(
+      listMember.map(async (item) => {
+        const user = item.user_id as unknown as User;
+        return {
+          ...user,
+          user_id: user._id,
+          permission: item.permission,
+          contact_type:
+            (
+              await this.friendModel
+                .findOne({
+                  user_id: userId,
+                  user_friend_id: user._id.toString(),
+                })
+                .lean()
+            )?.type || 0,
+        };
+      }),
+    );
+
+    return {
+      conversation_id: conversation?._id,
+      name: conversation?.name,
+      type: conversation?.type,
+      is_confirm_new_member: conversation?.is_confirm_new_member,
+      no_of_member: conversation?.no_of_member,
+      link_join: conversation?.link_join,
+      avatar: conversation?.avatar,
+      members: response,
+    };
   }
 }

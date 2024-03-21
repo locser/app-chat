@@ -3,15 +3,18 @@ import {
   Controller,
   Get,
   HttpStatus,
+  Param,
   Post,
   Query,
   Request,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { RequestWithUser } from 'src/shared/requests.type';
+import { DetailConversationLinkJoinSwagger } from 'src/util/swagger/detail-conver-link-join.swagger';
 import { ConversationService } from './conversation.service';
 import { CreateConversationDto } from './dto/create-conversation.dto';
 import { DetailConversation } from './dto/detail-conversation.dto';
+import { ParamConversationLinkJoinDto } from './dto/link-join-conver.dto';
 import { CreateConversationResponse } from './response/create-conversation-response';
 import { QueryConversation } from './response/query-conversation.dto';
 
@@ -66,10 +69,7 @@ export class ConversationController {
 
   @Get('pinned')
   @ApiOperation({ summary: 'Danh sách cuộc trò chuyện' })
-  async getListPinnedConversation(
-    @Request() req: RequestWithUser,
-    @Query() query: QueryConversation,
-  ) {
+  async getListPinnedConversation(@Request() req: RequestWithUser) {
     const data = await this.conversationService.getListPinnedConversation(
       req.user._id,
     );
@@ -210,6 +210,25 @@ export class ConversationController {
       await this.conversationService.updateBackgroundConversation(
         param.conversation_id,
         back_ground,
+        req.user._id,
+      );
+    return data;
+  }
+
+  @Get(':link_join/detail')
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Lấy chi tiết cuộc trò truyện theo link join',
+    type: DetailConversationLinkJoinSwagger,
+  })
+  @ApiOperation({ summary: 'Lấy chi tiết cuộc trò truyện theo link join' })
+  async getDetailConversationWithLinkJoin(
+    @Request() req: RequestWithUser,
+    @Param() param: ParamConversationLinkJoinDto,
+  ) {
+    const data =
+      await this.conversationService.getDetailConversationWithLinkJoin(
+        param.link_join,
         req.user._id,
       );
     return data;
