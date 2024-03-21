@@ -928,11 +928,11 @@ export class ConversationService {
         'Không tìm thấy cuộc trò chuyện',
       );
 
-    if (conversation.members.includes(userId))
-      throw new ExceptionResponse(
-        HttpStatus.BAD_REQUEST,
-        'Bạn đã là thành viên của cuộc trò chuyện này',
-      );
+    // if (conversation.members.includes(userId))
+    //   throw new ExceptionResponse(
+    //     HttpStatus.BAD_REQUEST,
+    //     'Bạn đã là thành viên của cuộc trò chuyện này',
+    //   );
 
     const listMember = await this.conversationMemberModel
       .find({
@@ -972,6 +972,7 @@ export class ConversationService {
       link_join: conversation?.link_join,
       avatar: conversation?.avatar,
       members: response,
+      is_join: conversation.members.includes(userId) ? 1 : 0,
     };
   }
 }
