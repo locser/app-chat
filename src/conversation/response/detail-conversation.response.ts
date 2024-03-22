@@ -38,6 +38,7 @@ export class DetailConversationResponse {
   members: any;
 
   last_connect: string;
+  link_join: string;
 
   constructor(result?: any) {
     this.conversation_id = result?._id || '';
@@ -60,5 +61,6 @@ export class DetailConversationResponse {
     this.updated_at = result?.updated_at || '';
     this.last_activity = result?.last_activity || '';
     this.last_connect = result?.last_connect || '';
+    this.link_join = result?.link_join || '';
   }
 }

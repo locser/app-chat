@@ -2,6 +2,7 @@ import { HttpStatus, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import * as moment from 'moment';
 import { Model, Types } from 'mongoose';
+import { UserMessageResponse } from 'src/connection/response/user-message.response';
 import {
   CONVERSATION_MEMBER_PERMISSION,
   CONVERSATION_STATUS,
@@ -20,15 +21,13 @@ import {
 } from 'src/shared';
 import { BaseResponse } from 'src/shared/base-response.response';
 import { ConversationDisableNotify } from 'src/shared/conversation-disable-notify.entity';
+import { Friend } from 'src/shared/friend.entity';
 import { checkMongoId, formatUnixTimestamp } from 'src/util';
 import { CreateConversationDto } from './dto/create-conversation.dto';
 import { DetailConversation } from './dto/detail-conversation.dto';
 import { DetailConversationResponse } from './response/detail-conversation.response';
-import { QueryConversation } from './response/query-conversation.dto';
 import { LastMessageResponse } from './response/last-message.interface';
-import { UserMessageResponse } from 'src/connection/response/user-message.response';
-import { Friend } from 'src/shared/friend.entity';
-import { DetailConversationLinkJoin } from 'src/util/swagger/detail-conver-link-join.swagger';
+import { QueryConversation } from './response/query-conversation.dto';
 
 @Injectable()
 export class ConversationService {
@@ -936,7 +935,7 @@ export class ConversationService {
 
     const listMember = await this.conversationMemberModel
       .find({
-        conversation_id: conversation._id,
+        conversation_id: conversation._id.toString(),
         user_id: { $ne: userId },
       })
       .populate('user_id', '_id full_name avatar status')
@@ -964,15 +963,19 @@ export class ConversationService {
     );
 
     return {
-      conversation_id: conversation?._id,
-      name: conversation?.name,
-      type: conversation?.type,
-      is_confirm_new_member: conversation?.is_confirm_new_member,
-      no_of_member: conversation?.no_of_member,
-      link_join: conversation?.link_join,
-      avatar: conversation?.avatar,
-      members: response,
-      is_join: conversation.members.includes(userId) ? 1 : 0,
+      status: 200,
+      message: 'success',
+      data: {
+        conversation_id: conversation?._id,
+        name: conversation?.name,
+        type: conversation?.type,
+        is_confirm_new_member: conversation?.is_confirm_new_member,
+        no_of_member: conversation?.no_of_member,
+        link_join: conversation?.link_join,
+        avatar: conversation?.avatar,
+        members: response,
+        is_join: conversation.members.includes(userId) ? 1 : 0,
+      },
     };
   }
 }

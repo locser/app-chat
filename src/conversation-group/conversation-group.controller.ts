@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   HttpStatus,
+  Param,
   Post,
   Query,
   Request,
@@ -56,7 +57,7 @@ export class ConversationGroupController {
     return data;
   }
 
-  @Post('join-with-link')
+  @Post('join-with-link/:link_join')
   @ApiOperation({ summary: 'Tham gia bằng link' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -64,7 +65,7 @@ export class ConversationGroupController {
   })
   async joinWithLink(
     @Request() req: RequestWithUser,
-    @Query() param: QueryJoinWithLinkConversationDto,
+    @Param() param: QueryJoinWithLinkConversationDto,
   ) {
     const data: any = await this.conversationGroupService.joinWithLink(
       param.link_join,

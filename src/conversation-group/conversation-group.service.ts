@@ -149,6 +149,7 @@ export class ConversationGroupService {
         members: [user_id, ...member_ids],
         type: CONVERSATION_TYPE.GROUP,
         no_of_member: member_ids.length + 1,
+        link_join: generateRandomString(10),
       });
 
       //tạo member
@@ -161,6 +162,10 @@ export class ConversationGroupService {
 
       await this.conversationMemberModel.create(
         newConversation.members.map((id) => {
+          console.log(
+            '♥️ ~ ConversationGroupService ~ newConversation.members.map ~ id:',
+            id,
+          );
           return {
             user_id: id,
             permission:
@@ -249,7 +254,6 @@ export class ConversationGroupService {
         .populate('user_id', '_id full_name avatar status')
         .sort({ permission: 'desc', created_at: 'desc' })
         .lean();
-
       const response = await Promise.all(
         listMember.map(async (item) => {
           const user = item.user_id as unknown as User;
@@ -536,9 +540,13 @@ export class ConversationGroupService {
     }
   }
   async joinWithLink(link_join: string, user_id: string) {
+    console.log(
+      '♥️ ~ ConversationGroupService ~ joinWithLink ~ user_id:',
+      user_id,
+    );
     try {
       const conversation = await this.conversationModel.findOne({
-        is_join_with_link: BOOLEAN.TRUE,
+        // is_join_with_link: BOOLEAN.TRUE,
         link_join: link_join,
         type: CONVERSATION_TYPE.GROUP,
       });
@@ -548,9 +556,7 @@ export class ConversationGroupService {
       }
 
       if (conversation?.members?.includes(user_id)) {
-        return new BaseResponse(200, 'Bạn đã là thành viên của nhóm', {
-          conversation_id: conversation._id.toString(),
-        });
+        return new BaseResponse(400, 'Bạn đã là thành viên của nhóm');
       }
 
       const hasWaitingConfirmMember =
@@ -596,7 +602,7 @@ export class ConversationGroupService {
           conversation_id: conversation._id.toString(),
           created_at: +moment(),
           updated_at: +moment(),
-          user_id: +user_id,
+          user_id: user_id,
           permission: CONVERSATION_MEMBER_PERMISSION.MEMBER,
           message_last_id: 0,
           message_pre_id: 0,
@@ -606,7 +612,10 @@ export class ConversationGroupService {
         conversation.no_of_member += 1;
 
         conversation.save();
-
+        console.log(
+          '♥️ ~ ConversationGroupService ~ joinWithLink ~ conversation:',
+          conversation,
+        );
         return new BaseResponse(200, 'Tham gia nhóm thành công!', {
           conversation_id: conversation._id,
         });
