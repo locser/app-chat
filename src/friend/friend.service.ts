@@ -129,7 +129,7 @@ export class FriendService {
       );
     }
 
-    const a = await this.friendModel.create(
+    await this.friendModel.create(
       {
         user_id: user_id,
         user_friend_id: target_id,
@@ -319,7 +319,10 @@ export class FriendService {
     }
   }
 
-  async removeFriendUser(user_id: string, target_user_id: string) {
+  async removeFriendUser(
+    user_id: string,
+    target_user_id: string,
+  ): Promise<any> {
     return await this.friendModel.deleteOne({
       user_id: user_id,
       user_friend_id: target_user_id,

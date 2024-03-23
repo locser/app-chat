@@ -54,11 +54,16 @@ import { JwtModule } from '@nestjs/jwt';
         name: Message.name,
         schema: MessageSchema,
       },
+
+      {
+        name: User.name,
+        schema: UserSchema,
+      },
     ]),
     JwtModule.register({
       global: true,
       secret: process.env.JWT_SECRET,
-      signOptions: { expiresIn: '7d' },
+      signOptions: { expiresIn: 600 },
     }),
   ],
 })

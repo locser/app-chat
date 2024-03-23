@@ -3,9 +3,9 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { ExceptionResponse, User } from 'src/shared';
 import { BaseResponse } from 'src/shared/base-response.response';
+import { Friend } from 'src/shared/friend.entity';
 import { RequestWithUser } from 'src/shared/requests.type';
 import { UserProfileResponse } from './response/user-profile.response';
-import { Friend } from 'src/shared/friend.entity';
 
 @Injectable()
 export class UserService {
@@ -15,7 +15,7 @@ export class UserService {
         phone: phone,
       })
       .lean();
-    console.log('UserService ~ findUserByPhone ~ user:', user);
+    // console.log('UserService ~ findUserByPhone ~ user:', user);
 
     if (!user) {
       throw new ExceptionResponse(404, 'Không tìm thấy user');
@@ -28,7 +28,7 @@ export class UserService {
       })
       .lean();
 
-    console.log('UserService ~ findUserByPhone ~ contact_type:', contact_type);
+    // console.log('UserService ~ findUserByPhone ~ contact_type:', contact_type);
 
     return new BaseResponse(200, 'OK', {
       user: new UserProfileResponse({
