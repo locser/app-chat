@@ -3,6 +3,7 @@ import { RequestWithUser } from 'src/shared/requests.type';
 import { User } from 'src/shared';
 import { QueryPhone } from './dto/query-phone.dto';
 import { UserService } from './user.service';
+import { Public } from 'src/auth/roles.decorator';
 
 @Controller('user')
 export class UserController {

@@ -5,6 +5,7 @@ import { RequestWithUser } from '../shared/requests.type';
 import { LoginDto } from './dto/user-sign-in.dto';
 import { SignUpDto } from './dto/user-sign-up.dto';
 import { Public } from './roles.decorator';
+import { User } from 'src/shared';
 
 @Controller('auth')
 export class AuthController {
@@ -39,6 +40,13 @@ export class AuthController {
       req.user._id,
       changePasswordDto,
     );
+    return data;
+  }
+
+  @Post('reset-password')
+  @Public()
+  async resetPassWord(@Body() body: Partial<User>) {
+    const data = await this.authService.resetPassword(body);
     return data;
   }
 }

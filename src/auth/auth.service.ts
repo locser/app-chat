@@ -20,9 +20,44 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
+  async getUserById(_id: Types.ObjectId, token: string) {
+    const user = await this.userModel.findOne({
+      _id: new Types.ObjectId(_id),
+    });
+
+    if (user.access_token !== token) return true;
+
+    return false;
+  }
+
+  async resetPassword(body: Partial<User>) {
+    try {
+      const { phone, password } = body;
+
+      const user = await this.userModel.findOne({ phone: phone });
+
+      if (!user) {
+        throw new ExceptionResponse(
+          HttpStatus.NOT_FOUND,
+          'Không tìm thấy user',
+        );
+      }
+      await this.userModel.updateOne(
+        { _id: user._id },
+        {
+          password: await bcrypt.hash(password, 5),
+        },
+      );
+
+      return new BaseResponse(200, 'OK', 'Thay đổi mật khẩu thành công');
+    } catch (error) {
+      console.log('UserService ~ resetPassword ~ error:', error);
+      return new BaseResponse(400, 'ERROR');
+    }
+  }
+
   async signIn(body: LoginDto) {
     try {
-      console.log('AuthService ~ signIn ~ body:', body);
       const hasUser = await this.getAuthenticatedUser(
         {
           phone: body.phone,
@@ -57,24 +92,24 @@ export class AuthService {
     }
   }
 
-  async getAuthenticatedUser1(phone: string, password: string): Promise<User> {
-    try {
-      // get user
-      const user = await this.userModel.findOne({
-        phone: phone,
-        status: USER_STATUS.ACTIVE,
-      });
+  // async getAuthenticatedUser1(phone: string, password: string): Promise<User> {
+  //   try {
+  //     // get user
+  //     const user = await this.userModel.findOne({
+  //       phone: phone,
+  //       status: USER_STATUS.ACTIVE,
+  //     });
 
-      if (!user) {
-        throw new ExceptionResponse(404, 'Wrong credentials!!');
-      }
-      // check password
-      await this.verifyPlainContentWithHashedContent(password, user.password);
-      return user;
-    } catch (error) {
-      throw new ExceptionResponse(404, 'Wrong credentials!!');
-    }
-  }
+  //     if (!user) {
+  //       throw new ExceptionResponse(404, 'Wrong credentials!!');
+  //     }
+  //     // check password
+  //     await this.verifyPlainContentWithHashedContent(password, user.password);
+  //     return user;
+  //   } catch (error) {
+  //     throw new ExceptionResponse(404, 'Wrong credentials!!');
+  //   }
+  // }
 
   private async verifyPlainContentWithHashedContent(
     plainText: string,

@@ -17,6 +17,7 @@ export class AuthGuard implements CanActivate {
   constructor(
     private jwtService: JwtService,
     private reflector: Reflector,
+    // private authService: AuthService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -24,6 +25,7 @@ export class AuthGuard implements CanActivate {
       context.getHandler(),
       context.getClass(),
     ]);
+
     if (isPublic) {
       // 💡 See this condition
       return true;
@@ -48,6 +50,18 @@ export class AuthGuard implements CanActivate {
       );
     }
 
+    // const hasAccess = await this.authService.getUserById(
+    //   new Types.ObjectId(payload._id),
+    //   token,
+    // );
+
+    // if (!hasAccess) {
+    //   throw new ExceptionResponse(
+    //     HttpStatus.UNAUTHORIZED,
+    //     'Xác thực user không thành công',
+    //   );
+    // }
+
     const requiredRoles = this.reflector.getAllAndOverride<Role[]>(ROLES_KEY, [
       context.getHandler(),
       context.getClass(),
@@ -58,7 +72,7 @@ export class AuthGuard implements CanActivate {
       if (!requiredRoles.includes(payload?.role)) {
         throw new ExceptionResponse(
           HttpStatus.FORBIDDEN,
-          'Hãy đưa tôi 1 triệu tôi đưa bạn admin!',
+          'Không có quyền truy cập',
         );
       }
     }
