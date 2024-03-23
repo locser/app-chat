@@ -33,7 +33,7 @@ export class AuthController {
   @Post('change-password')
   async changePassword(
     @Request() req: RequestWithUser,
-    @Param() changePasswordDto: ChangePasswordDto,
+    @Body() changePasswordDto: ChangePasswordDto,
   ) {
     const data = await this.authService.changePassword(
       req.user._id,

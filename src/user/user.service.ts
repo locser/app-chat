@@ -72,11 +72,21 @@ export class UserService {
     if (!user) {
       throw new ExceptionResponse(HttpStatus.NOT_FOUND, 'User không tồn tại');
     }
+    const itMe = user_id === target_id;
+    const contact_type = await this.friendModel
+      .findOne({
+        user_id: user_id,
+        user_friend_id: user._id.toString(),
+      })
+      .lean();
 
     return {
       status: 200,
       message: 'OK',
-      data: new UserProfileResponse(user),
+      data: new UserProfileResponse({
+        ...user,
+        contact_type: itMe ? 1 : contact_type?.type,
+      }),
     };
   }
 }

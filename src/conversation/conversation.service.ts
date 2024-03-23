@@ -612,8 +612,8 @@ export class ConversationService {
           conversation_id: conversation_id,
         },
         {
-          message_last_id: conversation.updated_at,
-          message_pre_id: conversation.updated_at,
+          message_last_id: +moment(),
+          message_pre_id: +moment(),
           updated_at: +moment(),
         },
       );
