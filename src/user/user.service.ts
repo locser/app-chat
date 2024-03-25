@@ -67,7 +67,8 @@ export class UserService {
   async getProfile(user_id: string, target_id: string) {
     const user = await this.userModel
       .findById(target_id)
-      .select({ password: 0 });
+      .select({ password: 0 })
+      .lean();
 
     if (!user) {
       throw new ExceptionResponse(HttpStatus.NOT_FOUND, 'User không tồn tại');
