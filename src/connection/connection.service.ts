@@ -20,23 +20,6 @@ import { checkMongoId } from 'src/util';
 
 @Injectable()
 export class ConnectionService {
-  handleReactionMessage(
-    user_id: string,
-    data: any,
-  ):
-    | { message: any; conversation: any }
-    | PromiseLike<{ message: any; conversation: any }> {
-    throw new Error('Method not implemented.');
-  }
-  handleRevokeMessage(
-    user_id: string,
-    data: any,
-  ):
-    | { message: any; conversation: any }
-    | PromiseLike<{ message: any; conversation: any }> {
-    throw new Error('Method not implemented.');
-  }
-
   async validateUserTarget(target_user_id: string) {
     const validUserId = checkMongoId(target_user_id);
 
@@ -218,6 +201,36 @@ export class ConnectionService {
     });
 
     return newMessage;
+  }
+
+  async handleReactionMessage(user_id: string, data: any) {
+    throw new Error('Method not implemented.');
+  }
+
+  async handleRevokeMessage(user_id: string, data: any) {
+    const { message_id } = data;
+
+    const message = await this.messageModel.findOne({
+      _id: new Types.ObjectId(message_id),
+      status: MESSAGE_STATUS.ACTIVE,
+      // user_id: user_id,
+    });
+
+    if (!message) {
+      throw new ExceptionResponse(400, 'Không thể thu hồi tin nhắn');
+    }
+
+    message.type = MESSAGE_TYPE.REVOKE_MESSAGE;
+
+    const conversation = await this.conversationModel
+      .findOne({
+        _id: new Types.ObjectId(message.conversation_id),
+      })
+      .lean();
+
+    await message.save();
+
+    return { conversation: conversation, message: message.toObject() };
   }
 
   async validateStickerMessage(user_id: string, data: any) {

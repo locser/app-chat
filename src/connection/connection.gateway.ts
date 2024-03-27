@@ -362,7 +362,7 @@ export class ConnectionGateway
     try {
       const hasAccess = await this.connectionService.beforeJoinRoom(
         client.user._id,
-        data.conversation_id,
+        data?.conversation_id,
       );
 
       if (!hasAccess) {
@@ -372,7 +372,6 @@ export class ConnectionGateway
       const { message, conversation } =
         await this.connectionService.handleRevokeMessage(client.user._id, data);
 
-      // const messageResponse = new MessageResponse();
       this.emitSocketMessage(
         client.user,
         message,
